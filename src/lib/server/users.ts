@@ -1,0 +1,142 @@
+import { getAirtableConfig, FIELDS } from './airtableFieldIds';
+
+export interface AirtableUser {
+    recordId: string;
+    fullName: string;
+    email: string;
+    phone?: string;
+    passwordHash?: string;
+    authStatus?: string;
+}
+
+interface AirtableRecord {
+    id: string;
+    fields: Record<string, unknown>;
+}
+
+interface AirtableListResponse {
+    records: AirtableRecord[];
+}
+
+function buildAirtableUrl(tableId: string, path = ''): string {
+    const { baseId } = getAirtableConfig();
+    return `https://api.airtable.com/v0/${baseId}/${tableId}${path}`;
+}
+
+function getHeaders(): Record<string, string> {
+    const { apiKey } = getAirtableConfig();
+    return {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+    };
+}
+
+function recordToUser(record: AirtableRecord): AirtableUser {
+    const f = record.fields;
+    return {
+        recordId: record.id,
+        fullName: (f[FIELDS.FULL_NAME] as string) ?? '',
+        email: (f[FIELDS.EMAIL] as string) ?? '',
+        phone: (f[FIELDS.PHONE] as string) ?? undefined,
+        passwordHash: (f[FIELDS.PASSWORD_HASH] as string) ?? undefined,
+        authStatus: (f[FIELDS.AUTH_STATUS] as string) ?? undefined,
+    };
+}
+
+/** Busca un usuario por email normalizado. Retorna null si no existe. */
+export async function findUserByEmail(email: string): Promise<AirtableUser | null> {
+    email = email.trim().toLowerCase();
+
+    const { usersTableId } = getAirtableConfig();
+    const formula = encodeURIComponent(`LOWER({Email Address})="${email}"`);
+    const url = `${buildAirtableUrl(usersTableId)}?filterByFormula=${formula}&maxRecords=1`;
+
+    const res = await fetch(url, { headers: getHeaders(), cache: 'no-store' });
+
+    if (!res.ok) {
+        const body = await res.text();
+        throw new Error(`Airtable error buscando usuario: ${res.status} ${body}`);
+    }
+
+    const data: AirtableListResponse = await res.json();
+    if (!data.records || data.records.length === 0) return null;
+
+    return recordToUser(data.records[0]);
+}
+
+export interface CreateUserInput {
+    fullName: string;
+    email: string;
+    phone?: string;
+    passwordHash: string;
+}
+
+/** Crea un nuevo usuario en Airtable. Retorna el registro creado. */
+export async function createUser(input: CreateUserInput): Promise<AirtableUser> {
+    const { usersTableId } = getAirtableConfig();
+    const url = buildAirtableUrl(usersTableId);
+    const now = new Date().toISOString();
+
+    const fields: Record<string, string> = {
+        [FIELDS.FULL_NAME]: input.fullName,
+        [FIELDS.EMAIL]: input.email.trim().toLowerCase(),
+        [FIELDS.PASSWORD_HASH]: input.passwordHash,
+        [FIELDS.AUTH_STATUS]: 'active',
+        [FIELDS.REGISTRATION_DATE]: now,
+        [FIELDS.UPDATED_AT]: now,
+    };
+
+    if (input.phone) {
+        fields[FIELDS.PHONE] = input.phone;
+    }
+
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ fields }),
+    });
+
+    if (!res.ok) {
+        const body = await res.text();
+        throw new Error(`Airtable error creando usuario: ${res.status} ${body}`);
+    }
+
+    const record: AirtableRecord = await res.json();
+    return recordToUser(record);
+}
+
+export interface UpdateUserInput {
+    fullName?: string;
+    phone?: string;
+    passwordHash?: string;
+    authStatus?: string;
+    lastLoginAt?: string;
+}
+
+/** Actualiza campos de un usuario existente en Airtable por su recordId. */
+export async function updateUser(recordId: string, input: UpdateUserInput): Promise<void> {
+    const { usersTableId } = getAirtableConfig();
+    const url = `${buildAirtableUrl(usersTableId)}/${recordId}`;
+    const now = new Date().toISOString();
+
+    const fields: Record<string, string> = {
+        [FIELDS.UPDATED_AT]: now,
+    };
+
+    if (input.fullName !== undefined) fields[FIELDS.FULL_NAME] = input.fullName;
+    if (input.phone !== undefined) fields[FIELDS.PHONE] = input.phone;
+    if (input.passwordHash !== undefined) fields[FIELDS.PASSWORD_HASH] = input.passwordHash;
+    if (input.authStatus !== undefined) fields[FIELDS.AUTH_STATUS] = input.authStatus;
+    if (input.lastLoginAt !== undefined) fields[FIELDS.LAST_LOGIN_AT] = input.lastLoginAt;
+
+    const res = await fetch(url, {
+        method: 'PATCH',
+        headers: getHeaders(),
+        body: JSON.stringify({ fields }),
+    });
+
+    if (!res.ok) {
+        const body = await res.text();
+        throw new Error(`Airtable error actualizando usuario: ${res.status} ${body}`);
+    }
+}
