@@ -30,6 +30,10 @@ export interface ManagementRequest {
   serviceName?: string;
   notes?: string;
   invoice?: Invoice;
+  savingsAchieved?: number;
+  promotionStart?: string;
+  promotionEnd?: string;
+  duration?: number;
 }
 
 export interface PaymentMethod {

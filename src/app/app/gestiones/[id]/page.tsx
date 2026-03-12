@@ -10,9 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
 import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { es } from "date-fns/locale";
-import { ArrowLeft, FileText, Download, Ban } from "lucide-react";
+import { ArrowLeft, FileText, Download, Ban, TrendingUp, Calendar, Clock } from "lucide-react";
 
 export default function GestionDetailPage() {
     const { id } = useParams() as { id: string };
@@ -118,7 +118,7 @@ export default function GestionDetailPage() {
                                         </p>
                                     </div>
                                 </div>
-                                <Button variant="outline" size="sm" onClick={() => alert("Simulando descarga de factura...")}>
+                                <Button variant="outline" size="sm" onClick={() => window.open(gestion.invoice!.fileUrl, '_blank')}>
                                     <Download className="w-4 h-4 sm:mr-2" />
                                     <span className="hidden sm:inline">Ver / Descargar</span>
                                 </Button>
@@ -127,8 +127,69 @@ export default function GestionDetailPage() {
                             <p className="text-gray-500 text-sm">No se subió ninguna factura.</p>
                         )}
 
+                        {/* Negotiation Result Summary */}
+                        {(gestion.savingsAchieved || gestion.promotionStart) && (
+                            <div className="mt-6 pt-6 border-t border-gray-100">
+                                <h4 className="text-sm font-semibold text-gray-900 mb-4">Resultado de la Negociación</h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {gestion.savingsAchieved && (
+                                        <div className="p-3 bg-green-50 rounded-xl border border-green-100 flex items-center space-x-3">
+                                            <div className="p-2 bg-green-100 text-green-700 rounded-lg">
+                                                <TrendingUp className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-green-700 font-medium">Ahorro Conseguido</p>
+                                                <p className="text-lg font-bold text-green-900">${gestion.savingsAchieved.toLocaleString('es-AR')}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {gestion.duration && (
+                                        <div className="p-3 bg-blue-50 rounded-xl border border-blue-100 flex items-center space-x-3">
+                                            <div className="p-2 bg-blue-100 text-blue-700 rounded-lg">
+                                                <Clock className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-blue-700 font-medium">Duración del Beneficio</p>
+                                                <p className="text-lg font-bold text-blue-900">{gestion.duration} meses</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {gestion.promotionStart && (
+                                        <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center space-x-3">
+                                            <div className="p-2 bg-gray-200 text-gray-700 rounded-lg">
+                                                <Calendar className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-500 font-medium">Inicio de Promoción</p>
+                                                <p className="text-sm font-bold text-gray-900">
+                                                    {isValid(new Date(gestion.promotionStart)) 
+                                                        ? format(new Date(gestion.promotionStart), "dd/MM/yyyy")
+                                                        : gestion.promotionStart}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {gestion.promotionEnd && (
+                                        <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center space-x-3">
+                                            <div className="p-2 bg-gray-200 text-gray-700 rounded-lg">
+                                                <Calendar className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-500 font-medium">Fin de Promoción</p>
+                                                <p className="text-sm font-bold text-gray-900">
+                                                    {isValid(new Date(gestion.promotionEnd)) 
+                                                        ? format(new Date(gestion.promotionEnd), "dd/MM/yyyy")
+                                                        : gestion.promotionEnd}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         {gestion.notes && (
-                            <div className="mt-6">
+                            <div className="mt-6 pt-6 border-t border-gray-100">
                                 <h4 className="text-sm font-semibold text-gray-900 mb-2">Notas Adicionales</h4>
                                 <div className="p-4 bg-yellow-50 text-yellow-900 rounded-xl border border-yellow-100 text-sm whitespace-pre-wrap">
                                     {gestion.notes}

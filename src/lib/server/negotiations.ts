@@ -111,6 +111,7 @@ export async function getUserNegotiations(userId: string, email?: string) {
         status: record.fields[NEGOTIATION_FIELDS.STATUS],
         serviceName: record.fields[NEGOTIATION_FIELDS.SERVICE] || 'Factura cargada',
         userId: userId,
+        savingsAchieved: record.fields[NEGOTIATION_FIELDS.SAVINGS_ACHIEVED],
     }));
 }
 
@@ -140,7 +141,11 @@ export async function getNegotiationById(id: string) {
         serviceName: fields[NEGOTIATION_FIELDS.SERVICE] || 'Factura cargada',
         notes: fields[NEGOTIATION_FIELDS.NOTES],
         userId: fields[NEGOTIATION_FIELDS.USER]?.[0],
-        updatedAt: record.createdTime, // Fallback a createdTime si no hay campo updatedAt
+        updatedAt: record.createdTime,
+        savingsAchieved: fields[NEGOTIATION_FIELDS.SAVINGS_ACHIEVED],
+        promotionStart: fields[NEGOTIATION_FIELDS.PROMOTION_START],
+        promotionEnd: fields[NEGOTIATION_FIELDS.PROMOTION_END],
+        duration: fields[NEGOTIATION_FIELDS.DURATION],
         invoice: null as any
     };
 

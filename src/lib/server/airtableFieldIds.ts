@@ -52,4 +52,8 @@ export const NEGOTIATION_FIELDS = {
     SERVICE: 'fldfDT5diynohOFUd',
     NOTES: 'fldflZy8zgT4PJhuZ',
     EMAIL_LOOKUP: 'fldKBrXG02UNrQppj',
+    SAVINGS_ACHIEVED: 'fldCQDNjXSCdDrJln',
+    PROMOTION_START: 'fld7woT1fDKM8wtqu',
+    PROMOTION_END: 'fld5GJOQ9atkZMdoa',
+    DURATION: 'fldU6Q2c9BWpkWdpI',
 } as const;

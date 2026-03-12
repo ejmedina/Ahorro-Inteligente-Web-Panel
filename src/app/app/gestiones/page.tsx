@@ -85,11 +85,19 @@ export default function GestionesPage() {
                                         <p className="text-sm text-gray-500 mb-2">
                                             {format(new Date(g.createdAt), "dd 'de' MMMM, yyyy", { locale: es })}
                                         </p>
-                                        <div className="flex items-center text-xs text-gray-500">
-                                            Factura cargada:
-                                            <span className={g.invoice ? "text-green-600 ml-1 font-medium" : "text-red-600 ml-1 font-medium"}>
-                                                {g.invoice ? "Sí" : "No"}
-                                            </span>
+                                        <div className="flex flex-col space-y-1">
+                                            <div className="flex items-center text-xs text-gray-500">
+                                                Factura cargada:
+                                                <span className={g.invoice || g.id ? "text-green-600 ml-1 font-medium" : "text-red-600 ml-1 font-medium"}>
+                                                    {g.invoice || g.id ? "Sí" : "No"}
+                                                </span>
+                                            </div>
+                                            {g.status === "Completed" && g.savingsAchieved && (
+                                                <div className="flex items-center text-xs font-semibold text-green-700">
+                                                    Ahorro Conseguido:
+                                                    <span className="ml-1">${g.savingsAchieved.toLocaleString('es-AR')}</span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
