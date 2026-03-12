@@ -18,7 +18,7 @@ export async function createNegotiationWithInvoice(userId: string, file: File, n
     try {
         const blob = await put(filename, file, {
             access: 'public',
-            // El token BLOB_READ_WRITE_TOKEN se toma automáticamente de process.env si está en Vercel
+            token: process.env.BLOB_READ_WRITE_TOKEN,
         });
         blobUrl = blob.url;
     } catch (error) {
@@ -82,10 +82,14 @@ export async function createNegotiationWithInvoice(userId: string, file: File, n
     };
 }
 
-export async function getUserNegotiations(userId: string) {
+export async function getUserNegotiations(userId: string, email?: string) {
     const config = getAirtableConfig();
 
-    const formula = `{${NEGOTIATION_FIELDS.USER}}='${userId}'`;
+    // Priorizar búsqueda por email si está disponible, es más robusta en este esquema
+    const formula = email 
+        ? `{${NEGOTIATION_FIELDS.EMAIL_LOOKUP}}='${email}'`
+        : `SEARCH('${userId}', ARRAYJOIN({${NEGOTIATION_FIELDS.USER}}))`;
+
     const url = `https://api.airtable.com/v0/${config.baseId}/${config.negotiationsTableId}?filterByFormula=${encodeURIComponent(formula)}&returnFieldsByFieldId=1`;
     
     const response = await fetch(url, {

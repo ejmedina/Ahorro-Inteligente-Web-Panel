@@ -6,7 +6,7 @@ export interface User {
   createdAt: string;
 }
 
-export type ManagementStatus = 'draft' | 'submitted' | 'in_review' | 'negotiating' | 'resolved' | 'canceled' | 'Pending' | 'PendingPayment';
+export type ManagementStatus = 'draft' | 'submitted' | 'in_review' | 'negotiating' | 'resolved' | 'canceled' | 'Pending' | 'PendingPayment' | 'Completed' | 'In Progress' | 'Failed' | 'Missing Information';
 
 export interface Invoice {
   id: string;

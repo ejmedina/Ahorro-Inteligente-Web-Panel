@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
 
-        const gestiones = await getUserNegotiations(session.airtableRecordId);
+        const gestiones = await getUserNegotiations(session.airtableRecordId, session.email);
 
         return NextResponse.json({
             success: true,

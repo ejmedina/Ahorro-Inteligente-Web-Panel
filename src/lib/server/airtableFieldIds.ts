@@ -51,4 +51,5 @@ export const NEGOTIATION_FIELDS = {
     DATE: 'fld01y7zYT3A745P1',
     SERVICE: 'fldfDT5diynohOFUd',
     NOTES: 'fldflZy8zgT4PJhuZ',
+    EMAIL_LOOKUP: 'fldKBrXG02UNrQppj',
 } as const;

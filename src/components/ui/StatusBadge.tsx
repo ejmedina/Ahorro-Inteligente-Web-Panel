@@ -12,6 +12,12 @@ export function StatusBadge({ status }: { status: ManagementStatus | PaymentStat
         canceled: { label: "Cancelado", className: "bg-red-100 text-red-800" },
         Pending: { label: "Pendiente", className: "bg-blue-100 text-blue-700" },
         PendingPayment: { label: "Pendiente de Pago", className: "bg-purple-100 text-purple-700" },
+        Completed: { label: "Completado", className: "bg-green-100 text-green-800" },
+        "In Progress": { label: "En Progreso", className: "bg-blue-100 text-blue-700" },
+        Failed: { label: "Fallido", className: "bg-red-100 text-red-800" },
+        "Missing Information": { label: "Falta Información", className: "bg-yellow-100 text-yellow-800" },
+        verifyPayment: { label: "Verificando Pago", className: "bg-orange-100 text-orange-800" },
+        InProgressBilling: { label: "Facturacion en Progreso", className: "bg-blue-100 text-blue-700" },
 
         // Payments
         paid: { label: "Pagado", className: "bg-green-100 text-green-800" },
