@@ -2,10 +2,13 @@ import { ManagementRequest, Invoice } from '../types';
 import { airtableAdapter } from '../adapters/airtableAdapter';
 
 class ManagementService {
-    async getUserGestiones(userId: string): Promise<ManagementRequest[]> {
-        const gestiones = await airtableAdapter.getGestiones(userId);
-        // Sort descending by createdAt
-        return gestiones.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    async getUserGestiones(_userId: string): Promise<ManagementRequest[]> {
+        const res = await fetch('/api/gestiones');
+        if (!res.ok) throw new Error('Error al obtener las gestiones');
+        const data = await res.json();
+
+        // Ordenar por fecha descendente
+        return data.gestiones.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
 
     async getGestion(id: string): Promise<ManagementRequest | undefined> {
@@ -13,31 +16,34 @@ class ManagementService {
     }
 
     async createGestion(userId: string, file: File, notes?: string): Promise<ManagementRequest> {
-        // Simular upload
-        if (file.size > 10 * 1024 * 1024) throw new Error('File exceeds 10MB limit');
+        if (file.size > 10 * 1024 * 1024) throw new Error('El archivo excede el límite de 10MB');
 
-        const newReqId = "req_" + Date.now();
-        const invoice: Invoice = {
-            id: "inv_" + Date.now(),
-            managementId: newReqId,
-            filename: file.name,
-            size: file.size,
-            mime: file.type,
-            uploadedAt: new Date().toISOString(),
-            fileUrl: URL.createObjectURL(file) // Mock temporary URL
-        };
+        const formData = new FormData();
+        formData.append('file', file);
+        if (notes) formData.append('notes', notes);
 
-        const newGestion: ManagementRequest = {
-            id: newReqId,
+        const res = await fetch('/api/gestiones', {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'Error al crear la gestión');
+        }
+
+        const data = await res.json();
+        
+        // Retornar un objeto que cumpla con ManagementRequest para la UI
+        // Aunque el ID sea de Airtable, el resto lo mapeamos aquí
+        return {
+            id: data.gestion.id,
             userId,
-            status: "draft",
+            status: data.gestion.status as any,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             notes,
-            invoice
         };
-
-        return airtableAdapter.createGestion(newGestion);
     }
 
     async cancelGestion(id: string): Promise<ManagementRequest> {

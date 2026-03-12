@@ -21,6 +21,8 @@ export function getAirtableConfig() {
         apiKey: requireEnv('AIRTABLE_API_KEY'),
         baseId: requireEnv('AIRTABLE_BASE_ID'),
         usersTableId: process.env.AIRTABLE_USERS_TABLE_ID ?? 'tblpuuhAsOfLgQuRA',
+        invoicesTableId: 'tblAGJMbj64wTKM1I',
+        negotiationsTableId: 'tblsAlKqXrMeLctBM',
     };
 }
 
@@ -33,4 +35,18 @@ export const FIELDS = {
     AUTH_STATUS: process.env.AIRTABLE_USERS_FIELD_AUTH_STATUS ?? 'fldyhT2P9LwDER97E',
     LAST_LOGIN_AT: process.env.AIRTABLE_USERS_FIELD_LAST_LOGIN_AT ?? 'fld3nUiqE7n0I2wdn',
     UPDATED_AT: process.env.AIRTABLE_USERS_FIELD_UPDATED_AT ?? 'fldEof20vAryoxrQ1',
+} as const;
+
+export const INVOICE_FIELDS = {
+    PHOTO: 'fldVX8QSqIC1Jur27',
+    USER: 'fldlKcp1L6rLFvzPM',
+    DATE: 'fldV24bvgzasnep7X',
+    NEGOTIATIONS: 'fldMDX0AkATbPGSzx',
+} as const;
+
+export const NEGOTIATION_FIELDS = {
+    INVOICE: 'fldCKFRUuVvQTf8RS',
+    STATUS: 'fldSN7NPwlNe4JUTS',
+    USER: 'fldTlH3gNFePNGJ7Y',
+    DATE: 'fld01y7zYT3A745P1',
 } as const;
