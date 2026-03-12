@@ -62,7 +62,7 @@ export async function createNegotiationWithInvoice(userId: string, file: File, n
                 [NEGOTIATION_FIELDS.USER]: [userId],
                 [NEGOTIATION_FIELDS.INVOICE]: [newInvoice.id],
                 [NEGOTIATION_FIELDS.STATUS]: initialStatus,
-                // Podrías mapear notas aquí si hubiera una columna específica
+                [NEGOTIATION_FIELDS.NOTES]: notes || '',
             }
         })
     });
@@ -85,7 +85,8 @@ export async function createNegotiationWithInvoice(userId: string, file: File, n
 export async function getUserNegotiations(userId: string) {
     const config = getAirtableConfig();
 
-    const url = `https://api.airtable.com/v0/${config.baseId}/${config.negotiationsTableId}?filterByFormula={${NEGOTIATION_FIELDS.USER}}='${userId}'`;
+    const formula = `{${NEGOTIATION_FIELDS.USER}}='${userId}'`;
+    const url = `https://api.airtable.com/v0/${config.baseId}/${config.negotiationsTableId}?filterByFormula=${encodeURIComponent(formula)}&returnFieldsByFieldId=1`;
     
     const response = await fetch(url, {
         headers: {
@@ -104,7 +105,7 @@ export async function getUserNegotiations(userId: string) {
         id: record.id,
         createdAt: record.fields[NEGOTIATION_FIELDS.DATE] || record.createdTime,
         status: record.fields[NEGOTIATION_FIELDS.STATUS],
-        serviceName: record.fields[NEGOTIATION_FIELDS.SERVICE],
+        serviceName: record.fields[NEGOTIATION_FIELDS.SERVICE] || 'Factura cargada',
         userId: userId,
         // En un flujo real, aquí buscaríamos los detalles del invoice si los necesitamos
     }));
