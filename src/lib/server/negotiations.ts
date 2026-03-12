@@ -111,6 +111,61 @@ export async function getUserNegotiations(userId: string, email?: string) {
         status: record.fields[NEGOTIATION_FIELDS.STATUS],
         serviceName: record.fields[NEGOTIATION_FIELDS.SERVICE] || 'Factura cargada',
         userId: userId,
-        // En un flujo real, aquí buscaríamos los detalles del invoice si los necesitamos
     }));
+}
+
+export async function getNegotiationById(id: string) {
+    const config = getAirtableConfig();
+    const url = `https://api.airtable.com/v0/${config.baseId}/${config.negotiationsTableId}/${id}?returnFieldsByFieldId=1`;
+    
+    const response = await fetch(url, {
+        headers: {
+            'Authorization': `Bearer ${config.apiKey}`
+        }
+    });
+
+    if (!response.ok) {
+        if (response.status === 404) return null;
+        const err = await response.json();
+        throw new Error(`Error obteniendo gestión de Airtable: ${JSON.stringify(err)}`);
+    }
+
+    const record = await response.json();
+    const fields = record.fields;
+
+    const negotiation = {
+        id: record.id,
+        createdAt: fields[NEGOTIATION_FIELDS.DATE] || record.createdTime,
+        status: fields[NEGOTIATION_FIELDS.STATUS],
+        serviceName: fields[NEGOTIATION_FIELDS.SERVICE] || 'Factura cargada',
+        notes: fields[NEGOTIATION_FIELDS.NOTES],
+        userId: fields[NEGOTIATION_FIELDS.USER]?.[0],
+        updatedAt: record.createdTime, // Fallback a createdTime si no hay campo updatedAt
+        invoice: null as any
+    };
+
+    // Si tiene un invoice vinculado, buscamos sus detalles
+    const invoiceId = fields[NEGOTIATION_FIELDS.INVOICE]?.[0];
+    if (invoiceId) {
+        const invUrl = `https://api.airtable.com/v0/${config.baseId}/${config.invoicesTableId}/${invoiceId}?returnFieldsByFieldId=1`;
+        const invRes = await fetch(invUrl, {
+            headers: { 'Authorization': `Bearer ${config.apiKey}` }
+        });
+        if (invRes.ok) {
+            const invRecord = await invRes.json();
+            const invFields = invRecord.fields;
+            const photo = invFields[INVOICE_FIELDS.PHOTO]?.[0];
+            
+            negotiation.invoice = {
+                id: invRecord.id,
+                filename: photo?.filename || 'Factura',
+                size: photo?.size || 0,
+                mime: photo?.type || 'application/pdf',
+                fileUrl: photo?.url || '',
+                uploadedAt: invFields[INVOICE_FIELDS.DATE] || invRecord.createdTime
+            };
+        }
+    }
+
+    return negotiation;
 }

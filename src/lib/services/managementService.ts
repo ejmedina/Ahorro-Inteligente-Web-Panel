@@ -12,7 +12,13 @@ class ManagementService {
     }
 
     async getGestion(id: string): Promise<ManagementRequest | undefined> {
-        return airtableAdapter.getGestionById(id);
+        const res = await fetch(`/api/gestiones/${id}`);
+        if (!res.ok) {
+            if (res.status === 404) return undefined;
+            throw new Error('Error al obtener el detalle de la gestión');
+        }
+        const data = await res.json();
+        return data.gestion;
     }
 
     async createGestion(userId: string, file: File, notes?: string): Promise<ManagementRequest> {
