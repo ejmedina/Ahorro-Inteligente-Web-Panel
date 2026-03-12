@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
         // Llamar a la lógica de Airtable
         const result = await createNegotiationWithInvoice(
             session.airtableRecordId,
-            { name: file.name, type: file.type },
+            file,
             notes
         );
 

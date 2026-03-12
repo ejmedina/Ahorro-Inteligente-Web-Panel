@@ -1,7 +1,8 @@
 import { getAirtableConfig, INVOICE_FIELDS, NEGOTIATION_FIELDS } from './airtableFieldIds';
 import { stripeAdapter } from '../adapters/stripeAdapter';
+import { put } from '@vercel/blob';
 
-export async function createNegotiationWithInvoice(userId: string, fileData: { name: string, type: string }, notes?: string) {
+export async function createNegotiationWithInvoice(userId: string, file: File, notes?: string) {
     const config = getAirtableConfig();
 
     // 1. Verificar si el usuario tiene métodos de pago (Usando el mock actual)
@@ -9,10 +10,23 @@ export async function createNegotiationWithInvoice(userId: string, fileData: { n
     const hasPaymentMethod = paymentMethods.length > 0;
     const initialStatus = hasPaymentMethod ? 'Pending' : 'PendingPayment';
 
-    // 2. Crear el registro en la tabla Invoices
-    // NOTA: Para subir un archivo real a Airtable vía API, necesitamos una URL pública.
-    // Como no tenemos storage configurado aún, guardaremos la referencia.
-    // En un flujo real, aquí subiríamos a S3/Cloudinary y obtendríamos la URL.
+    // 2. Subir archivo a Vercel Blob
+    // Generamos un nombre único para evitar colisiones
+    const filename = `${userId}-${Date.now()}-${file.name}`;
+    let blobUrl = '';
+    
+    try {
+        const blob = await put(filename, file, {
+            access: 'public',
+            // El token BLOB_READ_WRITE_TOKEN se toma automáticamente de process.env si está en Vercel
+        });
+        blobUrl = blob.url;
+    } catch (error) {
+        console.error('Error uploading to Vercel Blob:', error);
+        throw new Error('Error al subir la factura al almacenamiento.');
+    }
+
+    // 3. Crear el registro en la tabla Invoices
     const invoiceResponse = await fetch(`https://api.airtable.com/v0/${config.baseId}/${config.invoicesTableId}`, {
         method: 'POST',
         headers: {
@@ -23,7 +37,7 @@ export async function createNegotiationWithInvoice(userId: string, fileData: { n
             fields: {
                 [INVOICE_FIELDS.DATE]: new Date().toISOString().split('T')[0],
                 [INVOICE_FIELDS.USER]: [userId],
-                // [INVOICE_FIELDS.PHOTO]: [{ url: "LA_URL_DEL_ARCHIVO" }] // Requiere URL pública
+                [INVOICE_FIELDS.PHOTO]: [{ url: blobUrl }] // Airtable descargará el archivo desde esta URL
             }
         })
     });
@@ -35,7 +49,7 @@ export async function createNegotiationWithInvoice(userId: string, fileData: { n
 
     const newInvoice = await invoiceResponse.json();
 
-    // 3. Crear el registro en la tabla Negotiations
+    // 4. Crear el registro en la tabla Negotiations
     const negotiationResponse = await fetch(`https://api.airtable.com/v0/${config.baseId}/${config.negotiationsTableId}`, {
         method: 'POST',
         headers: {
@@ -48,7 +62,7 @@ export async function createNegotiationWithInvoice(userId: string, fileData: { n
                 [NEGOTIATION_FIELDS.USER]: [userId],
                 [NEGOTIATION_FIELDS.INVOICE]: [newInvoice.id],
                 [NEGOTIATION_FIELDS.STATUS]: initialStatus,
-                // Si hubiera una columna de notas, la pondríamos aquí
+                // Podrías mapear notas aquí si hubiera una columna específica
             }
         })
     });
@@ -63,7 +77,8 @@ export async function createNegotiationWithInvoice(userId: string, fileData: { n
     return {
         id: newNegotiation.id,
         invoiceId: newInvoice.id,
-        status: initialStatus
+        status: initialStatus,
+        fileUrl: blobUrl
     };
 }
 
@@ -90,6 +105,5 @@ export async function getUserNegotiations(userId: string) {
         createdAt: record.fields[NEGOTIATION_FIELDS.DATE] || record.createdTime,
         status: record.fields[NEGOTIATION_FIELDS.STATUS],
         userId: userId,
-        // En un flujo real, aquí buscaríamos los detalles del invoice si los necesitamos
     }));
 }
