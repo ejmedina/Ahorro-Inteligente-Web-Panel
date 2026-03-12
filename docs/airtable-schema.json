@@ -1,0 +1,707 @@
+{
+  "Invoices": {
+    "id": "tblAGJMbj64wTKM1I",
+    "fields": {
+      "Invoice ID": {
+        "id": "fldQ6ojllj9o8OG5w",
+        "type": "autoNumber"
+      },
+      "Upload Date": {
+        "id": "fldV24bvgzasnep7X",
+        "type": "date"
+      },
+      "Invoice Amount": {
+        "id": "fldwP3pe0h72klv7k",
+        "type": "currency"
+      },
+      "Invoice Photo": {
+        "id": "fldVX8QSqIC1Jur27",
+        "type": "multipleAttachments"
+      },
+      "User ID": {
+        "id": "fldlKcp1L6rLFvzPM",
+        "type": "multipleRecordLinks"
+      },
+      "Invoice link": {
+        "id": "fldQYoQkoJDG3dANc",
+        "type": "singleLineText"
+      },
+      "Invoice Company": {
+        "id": "fldzJIv8GPrZYS0uu",
+        "type": "singleLineText"
+      },
+      "Invoice Service Plan": {
+        "id": "fldnFvDeckY9QAwxK",
+        "type": "richText"
+      },
+      "Negotiations": {
+        "id": "fldMDX0AkATbPGSzx",
+        "type": "multipleRecordLinks"
+      },
+      "DNI": {
+        "id": "fldtxUUO5YUzYaenl",
+        "type": "singleLineText"
+      },
+      "Invoice Client ID": {
+        "id": "fldklIrhUtC1EdHcw",
+        "type": "singleLineText"
+      },
+      "Subscriptions": {
+        "id": "fldRWPBSqD2f9T3yx",
+        "type": "singleLineText"
+      },
+      "Negotiations 2": {
+        "id": "fldhjh0Fs1DYveKUU",
+        "type": "singleLineText"
+      },
+      "Linea Movistar Hogar": {
+        "id": "fldgk53hpKNb8ndLr",
+        "type": "singleLineText"
+      },
+      "Fecha Nacimiento Titular": {
+        "id": "fldMbdYroyLQbm6Gp",
+        "type": "date"
+      },
+      "Users copy": {
+        "id": "fldQpnCRjke6M3PQ1",
+        "type": "multipleRecordLinks"
+      }
+    }
+  },
+  "Subscriptions": {
+    "id": "tblS7BU1CzKgRtxEC",
+    "fields": {
+      "Subscription ID": {
+        "id": "fldLJFXq0MNp7zA2D",
+        "type": "autoNumber"
+      },
+      "Subscription Plan": {
+        "id": "fldRIFdRDXJip3R1q",
+        "type": "singleSelect"
+      },
+      "Start Date": {
+        "id": "fldLqyRUNK8I374bl",
+        "type": "date"
+      },
+      "End Date": {
+        "id": "fldrbrhoU4fHD8H0B",
+        "type": "date"
+      },
+      "Amount": {
+        "id": "fldtxdzu5UyqXk8AU",
+        "type": "currency"
+      },
+      "Status": {
+        "id": "fldJZgo0IPsHpUGtR",
+        "type": "singleSelect"
+      },
+      "Payment Method": {
+        "id": "fldmoUMJwCusv54zK",
+        "type": "singleSelect"
+      },
+      "Negotiations": {
+        "id": "flde9SfnmnZapp12a",
+        "type": "multipleRecordLinks"
+      },
+      "Payments": {
+        "id": "fldHp6w6XiZ20eW8s",
+        "type": "multipleRecordLinks"
+      },
+      "Users": {
+        "id": "fldunYx2afgCRazdF",
+        "type": "multipleRecordLinks"
+      },
+      "User ID (from Users)": {
+        "id": "fldvYm1WSZLLteFXM",
+        "type": "multipleLookupValues"
+      },
+      "Users copy": {
+        "id": "fldZ29KSIt3XYIPeU",
+        "type": "multipleRecordLinks"
+      }
+    }
+  },
+  "Negotiations": {
+    "id": "tblsAlKqXrMeLctBM",
+    "fields": {
+      "Negotiation ID": {
+        "id": "fldhKjjnp9OZYElkf",
+        "type": "autoNumber"
+      },
+      "Invoice": {
+        "id": "fldCKFRUuVvQTf8RS",
+        "type": "multipleRecordLinks"
+      },
+      "Negotiation Date": {
+        "id": "fld01y7zYT3A745P1",
+        "type": "date"
+      },
+      "Asignee": {
+        "id": "fld0AmShNQPjoHbx3",
+        "type": "singleSelect"
+      },
+      "Negotiation Status": {
+        "id": "fldSN7NPwlNe4JUTS",
+        "type": "singleSelect"
+      },
+      "Negociator": {
+        "id": "fldClJmYpV8bR3IwX",
+        "type": "singleSelect"
+      },
+      "Failed Reason": {
+        "id": "fldeoxGTFfMo5JSjr",
+        "type": "singleSelect"
+      },
+      "Negotiated Amount": {
+        "id": "fldVXom0iZJ4JKl8y",
+        "type": "currency"
+      },
+      "Promotion end": {
+        "id": "fld5GJOQ9atkZMdoa",
+        "type": "date"
+      },
+      "Savings Achieved": {
+        "id": "fldCQDNjXSCdDrJln",
+        "type": "currency"
+      },
+      "Service": {
+        "id": "fldfDT5diynohOFUd",
+        "type": "singleLineText"
+      },
+      "Template": {
+        "id": "fld3WmhpdlV1ShAsz",
+        "type": "singleSelect"
+      },
+      "User": {
+        "id": "fldTlH3gNFePNGJ7Y",
+        "type": "multipleRecordLinks"
+      },
+      "User Subscription": {
+        "id": "fldJIubVREMIapYNt",
+        "type": "multipleRecordLinks"
+      },
+      "Full Name (from User)": {
+        "id": "fldRGomK0C5I3maoH",
+        "type": "multipleLookupValues"
+      },
+      "Client Notified": {
+        "id": "fldlxwrrWJZEIkjN5",
+        "type": "checkbox"
+      },
+      "Evidencia": {
+        "id": "fldWoQQlf1LwCCCWp",
+        "type": "multipleAttachments"
+      },
+      "User ID (from User)": {
+        "id": "fldjzfmr3jNgvnVZE",
+        "type": "multipleLookupValues"
+      },
+      "Invoice Amount (from Invoice)": {
+        "id": "fldTjjwYf8ykTXnZr",
+        "type": "multipleLookupValues"
+      },
+      "Email Address (from User)": {
+        "id": "fldKBrXG02UNrQppj",
+        "type": "multipleLookupValues"
+      },
+      "Duration": {
+        "id": "fldU6Q2c9BWpkWdpI",
+        "type": "number"
+      },
+      "Original Amount": {
+        "id": "fldWwKpgoqmpATg7n",
+        "type": "currency"
+      },
+      "Promotion start": {
+        "id": "fld7woT1fDKM8wtqu",
+        "type": "date"
+      },
+      "Cuota": {
+        "id": "fldDt3WLsLkHdl8sT",
+        "type": "currency"
+      },
+      "Revenue": {
+        "id": "fldXLR3kIWQdwTdNA",
+        "type": "formula"
+      },
+      "Custom Text": {
+        "id": "fldflZy8zgT4PJhuZ",
+        "type": "multilineText"
+      },
+      "Users copy": {
+        "id": "fldo0Sg6lT1aUeZ8d",
+        "type": "multipleRecordLinks"
+      }
+    }
+  },
+  "Users": {
+    "id": "tblpuuhAsOfLgQuRA",
+    "fields": {
+      "User ID": {
+        "id": "fldM5fiTaPOtngXPd",
+        "type": "singleLineText"
+      },
+      "Full Name": {
+        "id": "fldG7IovSWLshETDg",
+        "type": "singleLineText"
+      },
+      "Referral code": {
+        "id": "fldz2UofeV09EtPSK",
+        "type": "singleLineText"
+      },
+      "Phone Number": {
+        "id": "fldyPsfgKKnpcRYjI",
+        "type": "singleLineText"
+      },
+      "Subscription Status": {
+        "id": "fldMjTJucYIRQmExW",
+        "type": "singleSelect"
+      },
+      "Registration Date": {
+        "id": "fldKIoT8c3bxEGFqH",
+        "type": "date"
+      },
+      "Total Savings": {
+        "id": "fldRFiLlQuLq3RKs2",
+        "type": "currency"
+      },
+      "Email Address": {
+        "id": "fld3gSo42zCQFqtGW",
+        "type": "singleLineText"
+      },
+      "Negotiations": {
+        "id": "fldaU0tKNCkUw3gML",
+        "type": "multipleRecordLinks"
+      },
+      "Invoices 2": {
+        "id": "fldbpZj077kIXmWEp",
+        "type": "multipleRecordLinks"
+      },
+      "Invoices": {
+        "id": "fldLoC1pvyubQgWBG",
+        "type": "singleLineText"
+      },
+      "Messages": {
+        "id": "fldJYfgXoewK7a96v",
+        "type": "multipleRecordLinks"
+      },
+      "Utility Companies": {
+        "id": "fldze5qRE5NlM242g",
+        "type": "multipleRecordLinks"
+      },
+      "Payments": {
+        "id": "flda4drCL4MG3X74d",
+        "type": "multipleRecordLinks"
+      },
+      "referral": {
+        "id": "fldCpf9Ta47Fr8VoQ",
+        "type": "singleLineText"
+      },
+      "Subscriptions": {
+        "id": "fldzqblzfLlb7wxyf",
+        "type": "multipleRecordLinks"
+      },
+      "Subscription Plan (from Subscriptions)": {
+        "id": "fldaLmhGeUyvqy6F7",
+        "type": "multipleLookupValues"
+      },
+      "Sendpulse Link": {
+        "id": "fldjnnQXXe1Z18MCH",
+        "type": "singleLineText"
+      },
+      "dni": {
+        "id": "fldmLuEL6IWNvnp1s",
+        "type": "singleLineText"
+      },
+      "First Name": {
+        "id": "fldSosGB1IZ0vqau4",
+        "type": "singleLineText"
+      },
+      "Last Name": {
+        "id": "fldI9en9Fcax7gTMC",
+        "type": "singleLineText"
+      },
+      "Password Hash": {
+        "id": "fldIFTcoFmMNWOZyM",
+        "type": "multilineText"
+      },
+      "Auth Status": {
+        "id": "fldyhT2P9LwDER97E",
+        "type": "singleSelect"
+      },
+      "Last Login At": {
+        "id": "fld3nUiqE7n0I2wdn",
+        "type": "dateTime"
+      },
+      "Updated At": {
+        "id": "fldEof20vAryoxrQ1",
+        "type": "dateTime"
+      }
+    }
+  },
+  "Utility Companies": {
+    "id": "tbl7s4xUe2Cyx8dzX",
+    "fields": {
+      "Company Name": {
+        "id": "fldDe7nXhCeEYSJKd",
+        "type": "singleLineText"
+      },
+      "Service Type": {
+        "id": "fldu2BE5FOVX8Adzb",
+        "type": "singleSelect"
+      },
+      "Contact Email": {
+        "id": "fldsPfk2LpNlUIdUI",
+        "type": "singleLineText"
+      },
+      "Phone Number": {
+        "id": "flduyUlmBGjYc2IKD",
+        "type": "singleLineText"
+      },
+      "Address": {
+        "id": "fldewafA7nlQBkaZM",
+        "type": "singleLineText"
+      },
+      "Website": {
+        "id": "fldK8lYInce7HT83S",
+        "type": "singleLineText"
+      },
+      "Rating": {
+        "id": "fldBuHt03g6EA3dIc",
+        "type": "number"
+      },
+      "Contracted Users": {
+        "id": "fldBZEUjwc5AVqDip",
+        "type": "multipleRecordLinks"
+      },
+      "Users copy": {
+        "id": "fld6EP794qSV2YTjE",
+        "type": "multipleRecordLinks"
+      }
+    }
+  },
+  "Payments": {
+    "id": "tblkWaCoR8F3YJfc8",
+    "fields": {
+      "Payment ID": {
+        "id": "fldBkNwe8Ko5Cmiap",
+        "type": "singleLineText"
+      },
+      "User": {
+        "id": "fld4qjIeaRgbYfySX",
+        "type": "multipleRecordLinks"
+      },
+      "Amount Paid": {
+        "id": "fldjlbuowOiSeFXZR",
+        "type": "currency"
+      },
+      "Payment Date": {
+        "id": "flduJCjC8RcoZ15fh",
+        "type": "date"
+      },
+      "Payment Method": {
+        "id": "fldd5zpTmCjOMNG9o",
+        "type": "singleSelect"
+      },
+      "Payment Purpose": {
+        "id": "fldcGAjnMhRl5j5Vo",
+        "type": "singleSelect"
+      },
+      "Invoice": {
+        "id": "fldx8UzcwtohRYG5Z",
+        "type": "singleLineText"
+      },
+      "Subscription": {
+        "id": "fldK7Nlm143BqLGDD",
+        "type": "multipleRecordLinks"
+      },
+      "Confirmation Number": {
+        "id": "fldZFCrdB5QYWyiN0",
+        "type": "singleLineText"
+      },
+      "Payment Status": {
+        "id": "fldbDL1e69fEPVIJq",
+        "type": "singleSelect"
+      },
+      "Users copy": {
+        "id": "fldz5uV4I53w5NOTc",
+        "type": "multipleRecordLinks"
+      }
+    }
+  },
+  "Messages": {
+    "id": "tblqdPOI3gLddiXiC",
+    "fields": {
+      "MessageID": {
+        "id": "fldkgY7DipupzvMaN",
+        "type": "singleLineText"
+      },
+      "UserID": {
+        "id": "fldaTcx9CDybvyg1l",
+        "type": "singleLineText"
+      },
+      "NegotiationID": {
+        "id": "fldkP9BnXV9cuXqOb",
+        "type": "singleLineText"
+      },
+      "SavingsID": {
+        "id": "fldOACibuQiPlTgYO",
+        "type": "singleLineText"
+      },
+      "MessageContent": {
+        "id": "fldihW3z7ciK2RNMe",
+        "type": "singleLineText"
+      },
+      "SentDate": {
+        "id": "fldj5cAkJBfqQslsP",
+        "type": "date"
+      },
+      "MessageStatus": {
+        "id": "fld5S7mnGvI7Xb2vw",
+        "type": "singleSelect"
+      },
+      "Users": {
+        "id": "fldCbzICaW8ria7Uk",
+        "type": "multipleRecordLinks"
+      },
+      "Users copy": {
+        "id": "fld7QKVsIaVMpInVz",
+        "type": "multipleRecordLinks"
+      }
+    }
+  },
+  "referrals": {
+    "id": "tbl3dAdYimZAuBmff",
+    "fields": {
+      "phone": {
+        "id": "fldsXWHDEEWWMNJo7",
+        "type": "singleLineText"
+      },
+      "code": {
+        "id": "fld3pea6DoM9bDJ50",
+        "type": "singleLineText"
+      }
+    }
+  },
+  "Backlog": {
+    "id": "tblVDHjym3DZ4k7QL",
+    "fields": {
+      "Name": {
+        "id": "fldQbRFVh54M2vNIE",
+        "type": "singleLineText"
+      },
+      "Notes": {
+        "id": "fldlhYPNqwc00cOac",
+        "type": "multilineText"
+      },
+      "Assignee": {
+        "id": "fldVVQEE0kaVdU21b",
+        "type": "singleCollaborator"
+      },
+      "Status": {
+        "id": "fldq40mzXgcQLweMM",
+        "type": "singleSelect"
+      },
+      "Area": {
+        "id": "fldxkSPiviEgrAivF",
+        "type": "singleSelect"
+      },
+      "Due Date": {
+        "id": "fldYIYQV7fFMHKVrN",
+        "type": "date"
+      }
+    }
+  },
+  "Lineas": {
+    "id": "tblGbHMCDo03F08yf",
+    "fields": {
+      "Numero de Linea": {
+        "id": "fldfhiB5Q4aAcnk1h",
+        "type": "number"
+      },
+      "Empresa": {
+        "id": "fld1eX9gaLKdeMGUU",
+        "type": "singleSelect"
+      },
+      "Asignado a": {
+        "id": "fldLHDbUUyv2tMupt",
+        "type": "singleSelect"
+      },
+      "A nombre de": {
+        "id": "fldlLHNM88mcWN9eq",
+        "type": "singleCollaborator"
+      },
+      "Fecha de Compra": {
+        "id": "fldyeG7DTrRs14ydg",
+        "type": "date"
+      },
+      "Fecha de Activación": {
+        "id": "fldRPuYOzeGtv7Viw",
+        "type": "date"
+      },
+      "Satus": {
+        "id": "fldodu6bbAT2N6suN",
+        "type": "singleSelect"
+      },
+      "Commentario": {
+        "id": "fldqrghEnRZRp8VVe",
+        "type": "singleLineText"
+      }
+    }
+  },
+  "Gastos": {
+    "id": "tblOBAwFTPDnbbaSv",
+    "fields": {
+      "Descripcion": {
+        "id": "fldMVhKatNiQvDsl9",
+        "type": "singleLineText"
+      },
+      "Fecha de gasto": {
+        "id": "fldUhysVB9kxxqGp8",
+        "type": "date"
+      },
+      "Moneda": {
+        "id": "fldhxtzNM3iWIqNng",
+        "type": "singleSelect"
+      },
+      "Monto": {
+        "id": "fldiN2dZ27ww3JgIJ",
+        "type": "currency"
+      },
+      "Pagado por": {
+        "id": "fldSCpUn6bqntfKOO",
+        "type": "singleCollaborator"
+      },
+      "Status": {
+        "id": "fldp0RDa1BRh9BZFT",
+        "type": "singleSelect"
+      },
+      "invoice": {
+        "id": "fldy0v8Ck5U4sm2bJ",
+        "type": "multipleAttachments"
+      },
+      "Fecha de liquidacion": {
+        "id": "fldjkL3sXtV3gCk0g",
+        "type": "date"
+      }
+    }
+  },
+  "Operators": {
+    "id": "tblJitzb0RNyWxTZN",
+    "fields": {
+      "Name": {
+        "id": "fldOphhZzLEG9KM9v",
+        "type": "singleLineText"
+      },
+      "Email": {
+        "id": "fldiXe0VKatFho3G2",
+        "type": "email"
+      }
+    }
+  },
+  "Users Sandbox": {
+    "id": "tblU9Fuq0226noKSP",
+    "fields": {
+      "User ID": {
+        "id": "fldhKqvJI3BOuOdQs",
+        "type": "singleLineText"
+      },
+      "Full Name": {
+        "id": "fldbMTBlqayNoc9Ev",
+        "type": "singleLineText"
+      },
+      "Referral code": {
+        "id": "fld4H5B5M9NuL15TZ",
+        "type": "singleLineText"
+      },
+      "Phone Number": {
+        "id": "fld3uDs6iYaKjpekX",
+        "type": "singleLineText"
+      },
+      "Subscription Status": {
+        "id": "fldhY4WkKcvcXUUyb",
+        "type": "singleSelect"
+      },
+      "Registration Date": {
+        "id": "fldfnz6YKhYSLeVrW",
+        "type": "date"
+      },
+      "Total Savings": {
+        "id": "fldmktYboIyLap0th",
+        "type": "currency"
+      },
+      "Email Address": {
+        "id": "fldyV3BUANpbMYJHb",
+        "type": "singleLineText"
+      },
+      "Negotiations": {
+        "id": "fldFzbGAlQ7fDBwN0",
+        "type": "multipleRecordLinks"
+      },
+      "Invoices 2": {
+        "id": "fldG4awQFl734UcFE",
+        "type": "multipleRecordLinks"
+      },
+      "Invoices": {
+        "id": "fldg3Nef3MhwXOcCV",
+        "type": "singleLineText"
+      },
+      "Messages": {
+        "id": "fldeDqtNWsj5eIp7K",
+        "type": "multipleRecordLinks"
+      },
+      "Utility Companies": {
+        "id": "fld4TgDHcjAGTAk3v",
+        "type": "multipleRecordLinks"
+      },
+      "Payments": {
+        "id": "fldFJoEsjiz1avn5s",
+        "type": "multipleRecordLinks"
+      },
+      "referral": {
+        "id": "fld74qmJIiU0yGbp5",
+        "type": "singleLineText"
+      },
+      "Subscriptions": {
+        "id": "fld45mypNZ8we4Nzu",
+        "type": "multipleRecordLinks"
+      },
+      "Subscription Plan (from Subscriptions)": {
+        "id": "fldFqxuwM8lQx6mGm",
+        "type": "multipleLookupValues"
+      },
+      "Sendpulse Link": {
+        "id": "fldO2y3NvsOk8G2DW",
+        "type": "singleLineText"
+      },
+      "dni": {
+        "id": "fldRqFRBEWJ8CVF2H",
+        "type": "singleLineText"
+      },
+      "First Name": {
+        "id": "fldn3DTrzWMlCYqvj",
+        "type": "singleLineText"
+      },
+      "Last Name": {
+        "id": "flddOpAZdqXSeO9NR",
+        "type": "singleLineText"
+      },
+      "Password Hash": {
+        "id": "flddk4pedAz83mfz1",
+        "type": "multilineText"
+      },
+      "Auth Status": {
+        "id": "fld3W4fFHZjYLpp8T",
+        "type": "singleSelect"
+      },
+      "Last Login At": {
+        "id": "fldy25vgclalPAMeC",
+        "type": "dateTime"
+      },
+      "Updated At": {
+        "id": "fld93qfQ3OeTv5HRg",
+        "type": "dateTime"
+      }
+    }
+  }
+}
