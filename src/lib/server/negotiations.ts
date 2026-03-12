@@ -17,7 +17,7 @@ export async function createNegotiationWithInvoice(userId: string, file: File, n
     
     try {
         const blob = await put(filename, file, {
-            access: 'public',
+            access: 'private',
             token: process.env.BLOB_READ_WRITE_TOKEN,
         });
         blobUrl = blob.url;
