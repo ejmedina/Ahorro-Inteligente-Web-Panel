@@ -16,7 +16,7 @@ La autenticación usa **email + contraseña** con Airtable como fuente de verdad
 ### Endpoints de auth
 | Método | Ruta | Descripción |
 |---|---|---|
-| `POST` | `/api/auth/register` | Registro o activación de cuenta |
+| `POST` | `/api/auth/register` | Registro de usuario nuevo |
 | `POST` | `/api/auth/login` | Login con email + contraseña |
 | `GET` | `/api/auth/me` | Usuario autenticado actual |
 | `POST` | `/api/auth/logout` | Cerrar sesión |
@@ -68,11 +68,15 @@ La aplicación estará disponible en `http://localhost:3000`.
 2. Completar nombre, email nuevo, contraseña (mín. 8 caracteres)
 3. Esperar redirección a `/app/gestiones` → sesión iniciada ✅
 
-### 2. Activación de usuario existente sin contraseña
+### 2. Registro con email existente sin contraseña (cuenta no activada)
 Si hay un usuario en Airtable con ese email pero sin `Password Hash`:
 1. Ir a `/register` y usar ese email
-2. El sistema detecta la cuenta existente sin contraseña y la activa
-3. Sesión iniciada ✅
+2. El sistema **rechaza el intento** por seguridad
+3. Error: *"Ya existe una cuenta con ese email, pero todavía no fue activada..."* ✅
+
+> **⚠️ Nota de seguridad:** La activación automática de cuentas sin contraseña fue deshabilitada
+> para evitar que alguien tome control de una cuenta ajena solo con conocer el email.
+> La activación segura (OTP / magic link) queda pendiente de implementación.
 
 ### 3. Email ya registrado con contraseña
 1. Ir a `/register` con un email que ya tiene contraseña configurada
@@ -100,6 +104,7 @@ Si hay un usuario en Airtable con ese email pero sin `Password Hash`:
 
 ## Pendientes futuros
 
+- **Activación segura de cuentas**: Implementar envío de OTP o magic link para activar cuentas que ya existen en Airtable sin `Password Hash` (la activación automática desde el formulario de registro fue deshabilitada por seguridad)
 - **Forgot password**: endpoint `/api/auth/forgot-password` + envío de email con token firmado
 - **Verificación de email**: endpoint `/api/auth/verify-email` con token de un solo uso
 - **Actualización de perfil**: endpoint `/api/auth/update-profile` para guardar cambios en Airtable

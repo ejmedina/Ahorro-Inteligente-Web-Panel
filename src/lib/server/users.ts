@@ -33,13 +33,23 @@ function getHeaders(): Record<string, string> {
 
 function recordToUser(record: AirtableRecord): AirtableUser {
     const f = record.fields;
+    
+    // Helper para buscar campo por ID o por nombres comunes si el ID falla
+    const findValue = (id: string, fallbacks: string[]): string | undefined => {
+        if (f[id] !== undefined) return f[id] as string;
+        for (const name of fallbacks) {
+            if (f[name] !== undefined) return f[name] as string;
+        }
+        return undefined;
+    };
+
     return {
         recordId: record.id,
-        fullName: (f[FIELDS.FULL_NAME] as string) ?? '',
-        email: (f[FIELDS.EMAIL] as string) ?? '',
-        phone: (f[FIELDS.PHONE] as string) ?? undefined,
-        passwordHash: (f[FIELDS.PASSWORD_HASH] as string) ?? undefined,
-        authStatus: (f[FIELDS.AUTH_STATUS] as string) ?? undefined,
+        fullName: findValue(FIELDS.FULL_NAME, ['Full Name', 'Nombre Completo', 'Nombre']) ?? '',
+        email: findValue(FIELDS.EMAIL, ['Email Address', 'Email', 'Correo']) ?? '',
+        phone: findValue(FIELDS.PHONE, ['Phone', 'Teléfono', 'Telefono', 'Phone Number']),
+        passwordHash: findValue(FIELDS.PASSWORD_HASH, ['Password Hash', 'Contraseña']),
+        authStatus: findValue(FIELDS.AUTH_STATUS, ['Auth Status', 'Estado']),
     };
 }
 
@@ -49,7 +59,7 @@ export async function findUserByEmail(email: string): Promise<AirtableUser | nul
 
     const { usersTableId } = getAirtableConfig();
     const formula = encodeURIComponent(`LOWER({Email Address})="${email}"`);
-    const url = `${buildAirtableUrl(usersTableId)}?filterByFormula=${formula}&maxRecords=1`;
+    const url = `${buildAirtableUrl(usersTableId)}?filterByFormula=${formula}&maxRecords=1&returnFieldsByFieldId=1`;
 
     const res = await fetch(url, { headers: getHeaders(), cache: 'no-store' });
 
@@ -82,7 +92,7 @@ export async function createUser(input: CreateUserInput): Promise<AirtableUser> 
         [FIELDS.EMAIL]: input.email.trim().toLowerCase(),
         [FIELDS.PASSWORD_HASH]: input.passwordHash,
         [FIELDS.AUTH_STATUS]: 'active',
-        [FIELDS.REGISTRATION_DATE]: now,
+        [FIELDS.REGISTRATION_DATE]: now.split('T')[0], // YYYY-MM-DD para campo tipo Date
         [FIELDS.UPDATED_AT]: now,
     };
 
@@ -90,7 +100,7 @@ export async function createUser(input: CreateUserInput): Promise<AirtableUser> 
         fields[FIELDS.PHONE] = input.phone;
     }
 
-    const res = await fetch(url, {
+    const res = await fetch(`${url}?returnFieldsByFieldId=1`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify({ fields }),
@@ -129,7 +139,7 @@ export async function updateUser(recordId: string, input: UpdateUserInput): Prom
     if (input.authStatus !== undefined) fields[FIELDS.AUTH_STATUS] = input.authStatus;
     if (input.lastLoginAt !== undefined) fields[FIELDS.LAST_LOGIN_AT] = input.lastLoginAt;
 
-    const res = await fetch(url, {
+    const res = await fetch(`${url}?returnFieldsByFieldId=1`, {
         method: 'PATCH',
         headers: getHeaders(),
         body: JSON.stringify({ fields }),

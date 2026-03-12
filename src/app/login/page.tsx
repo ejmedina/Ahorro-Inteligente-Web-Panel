@@ -19,7 +19,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
     const router = useRouter();
-    const { refreshUser } = useAuth();
+    const { setUser, refreshUser } = useAuth();
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
@@ -44,7 +44,12 @@ export default function LoginPage() {
                 return;
             }
 
+            if (json.user) {
+                setUser(json.user);
+            }
+            
             await refreshUser();
+            
             router.push("/app/gestiones");
         } catch {
             setError("Error de conexión. Intentá de nuevo.");

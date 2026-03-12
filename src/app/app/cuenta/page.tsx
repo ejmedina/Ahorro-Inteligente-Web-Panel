@@ -22,9 +22,15 @@ export default function CuentaPage() {
     const { user, logout } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [successMsg, setSuccessMsg] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
     const { register, handleSubmit, formState: { errors }, reset } = useForm<ProfileForm>({
-        resolver: zodResolver(profileSchema)
+        resolver: zodResolver(profileSchema),
+        defaultValues: {
+            name: user?.fullName ?? "",
+            email: user?.email ?? "",
+            phone: user?.phone ?? "",
+        },
     });
 
     useEffect(() => {
@@ -38,9 +44,13 @@ export default function CuentaPage() {
     }, [user, reset]);
 
     const onSubmit = async (_data: ProfileForm) => {
+        setIsLoading(true);
         // TODO: Implementar endpoint /api/auth/update-profile para actualizar datos en Airtable
-        setSuccessMsg("Función disponible próximamente.");
-        setIsEditing(false);
+        setTimeout(() => {
+            setSuccessMsg("Función disponible próximamente.");
+            setIsLoading(false);
+            setIsEditing(false);
+        }, 1000);
     };
 
     return (
@@ -99,7 +109,7 @@ export default function CuentaPage() {
                                 }}>
                                     Cancelar
                                 </Button>
-                                <Button type="submit">
+                                <Button type="submit" isLoading={isLoading}>
                                     Guardar Cambios
                                 </Button>
                             </div>

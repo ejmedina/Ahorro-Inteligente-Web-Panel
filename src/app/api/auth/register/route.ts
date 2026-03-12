@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { findUserByEmail, createUser, updateUser } from '@/lib/server/users';
+import { findUserByEmail, createUser } from '@/lib/server/users';
 import { buildSetSessionCookieHeader, SessionPayload } from '@/lib/server/session';
 
 export async function POST(request: NextRequest) {
@@ -57,26 +57,23 @@ export async function POST(request: NextRequest) {
                 phone: created.phone,
             };
         } else if (!existingUser.passwordHash) {
-            // Caso 2: Usuario existente sin password → activación de cuenta
-            const passwordHash = await bcrypt.hash(password, 10);
-            const updateFields: Parameters<typeof updateUser>[1] = {
-                passwordHash,
-                authStatus: 'active',
-            };
-            // Actualizar nombre y teléfono solo si estaban vacíos
-            if (!existingUser.fullName && trimmedName) updateFields.fullName = trimmedName;
-            if (!existingUser.phone && trimmedPhone) updateFields.phone = trimmedPhone;
-
-            await updateUser(existingUser.recordId, updateFields);
-
-            sessionPayload = {
-                airtableRecordId: existingUser.recordId,
-                fullName: existingUser.fullName || trimmedName,
-                email: existingUser.email,
-                phone: existingUser.phone || trimmedPhone,
-            };
+            // Caso 2: El email ya existe pero la cuenta no tiene contraseña asignada.
+            // SEGURIDAD: NO se permite activar automáticamente una cuenta existente
+            // desde el formulario de registro. Esto evita que alguien tome control
+            // de una cuenta ajena solo con conocer el email.
+            //
+            // TODO: Implementar un flujo seguro de activación por email
+            //       (envío de OTP o magic link) para este caso.
+            return NextResponse.json(
+                {
+                    error:
+                        'Ya existe una cuenta con ese email, pero todavía no fue activada. ' +
+                        'Por ahora no podés activarla automáticamente desde este formulario.',
+                },
+                { status: 409 }
+            );
         } else {
-            // Caso 3: Ya tiene contraseña → no duplicar
+            // Caso 3: El email ya existe y ya tiene contraseña → no duplicar
             return NextResponse.json(
                 { error: 'Ya existe una cuenta con ese email. Iniciá sesión.' },
                 { status: 409 }

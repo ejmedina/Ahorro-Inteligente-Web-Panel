@@ -13,7 +13,8 @@ export interface AuthUser {
 interface AuthContextType {
     user: AuthUser | null;
     isLoading: boolean;
-    refreshUser: () => Promise<void>;
+    setUser: (user: AuthUser | null) => void;
+    refreshUser: () => Promise<AuthUser | null>;
     logout: () => Promise<void>;
 }
 
@@ -25,17 +26,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
 
-    const refreshUser = async () => {
+    const refreshUser = async (): Promise<AuthUser | null> => {
         try {
             const res = await fetch("/api/auth/me", { cache: "no-store" });
             if (res.ok) {
                 const data = await res.json();
                 setUser(data.user ?? null);
+                return data.user ?? null;
             } else {
                 setUser(null);
+                return null;
             }
         } catch {
             setUser(null);
+            return null;
         }
     };
 
@@ -69,8 +73,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         router.push("/login");
     };
 
+    const login = (userData: AuthUser | null) => {
+        setUser(userData);
+        setIsLoading(false);
+    };
+
     return (
-        <AuthContext.Provider value={{ user, isLoading, refreshUser, logout }}>
+        <AuthContext.Provider value={{ user, isLoading, setUser: login, refreshUser, logout }}>
             {children}
         </AuthContext.Provider>
     );

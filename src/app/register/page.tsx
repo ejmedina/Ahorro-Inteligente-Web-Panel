@@ -21,7 +21,7 @@ type RegisterForm = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
     const router = useRouter();
-    const { refreshUser } = useAuth();
+    const { setUser, refreshUser } = useAuth();
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
@@ -51,7 +51,14 @@ export default function RegisterPage() {
                 return;
             }
 
+            // Actualizar estado local inmediatamente con los datos recibidos
+            if (json.user) {
+                setUser(json.user);
+            }
+            
+            // Refrescar desde el servidor para estar 100% sincronizados con la sesión
             await refreshUser();
+            
             router.push("/app/gestiones");
         } catch {
             setError("Error de conexión. Intentá de nuevo.");
