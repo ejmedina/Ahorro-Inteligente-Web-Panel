@@ -104,6 +104,8 @@ export async function getUserNegotiations(userId: string) {
         id: record.id,
         createdAt: record.fields[NEGOTIATION_FIELDS.DATE] || record.createdTime,
         status: record.fields[NEGOTIATION_FIELDS.STATUS],
+        serviceName: record.fields[NEGOTIATION_FIELDS.SERVICE],
         userId: userId,
+        // En un flujo real, aquí buscaríamos los detalles del invoice si los necesitamos
     }));
 }

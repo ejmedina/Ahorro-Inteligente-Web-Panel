@@ -10,6 +10,8 @@ export function StatusBadge({ status }: { status: ManagementStatus | PaymentStat
         negotiating: { label: "En Gestión", className: "bg-orange-100 text-orange-800" },
         resolved: { label: "Resuelto", className: "bg-green-100 text-green-800" },
         canceled: { label: "Cancelado", className: "bg-red-100 text-red-800" },
+        Pending: { label: "Pendiente", className: "bg-blue-100 text-blue-700" },
+        PendingPayment: { label: "Pendiente de Pago", className: "bg-purple-100 text-purple-700" },
 
         // Payments
         paid: { label: "Pagado", className: "bg-green-100 text-green-800" },
