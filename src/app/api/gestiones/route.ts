@@ -76,7 +76,7 @@ export async function GET(req: NextRequest) {
                 }
             }
 
-            await syncNegotiationsStatus(userId, methods.length > 0);
+            await syncNegotiationsStatus(userId, methods.length > 0, session.email);
         }
 
         const gestiones = await getUserNegotiations(userId, session.email);

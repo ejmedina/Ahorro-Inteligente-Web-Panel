@@ -53,21 +53,13 @@ export async function GET() {
         // ---- SINCRONIZACIÓN AUTOMÁTICA ----
         const hasMethods = paymentMethods.length > 0;
         const { syncNegotiationsStatus } = require('@/lib/server/syncPayloads');
-        await syncNegotiationsStatus(user.recordId, hasMethods);
+        await syncNegotiationsStatus(user.recordId, hasMethods, user.email);
 
         // ---- MANEJO DE MEDIO POR DEFECTO ----
         const Stripe = require('stripe');
         const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY as string);
         const customer = await stripeInstance.customers.retrieve(customerId);
         let defaultPmId = (customer as any).invoice_settings?.default_payment_method;
-
-        // Si hay uno solo y no es el default, lo forzamos como default en Stripe
-        if (paymentMethods.length === 1 && !defaultPmId) {
-            defaultPmId = paymentMethods[0].id;
-            await stripeInstance.customers.update(customerId, {
-                invoice_settings: { default_payment_method: defaultPmId }
-            });
-        }
 
         return NextResponse.json({
             success: true,
@@ -78,7 +70,7 @@ export async function GET() {
                 last4: pm.card?.last4,
                 expMonth: pm.card?.exp_month,
                 expYear: pm.card?.exp_year,
-                isDefault: pm.id === defaultPmId
+                isDefault: pm.id === defaultPmId || (paymentMethods.length === 1)
             })),
             payments: payments.map(p => ({
                 id: p.id,

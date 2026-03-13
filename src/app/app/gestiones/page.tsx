@@ -127,29 +127,30 @@ export default function GestionesPage() {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex flex-col items-end space-y-3">
+                                <div className="flex flex-col items-end space-y-3 shrink-0">
                                     <StatusBadge status={g.status} />
-                                    {g.status === "PendingPayment" ? (
-                                        <Button 
-                                            size="sm" 
-                                            className="bg-green-600 hover:bg-green-700 h-8"
-                                            onClick={async (e) => {
-                                                e.stopPropagation();
-                                                try {
-                                                    const url = await paymentService.getSetupUrl(user!.airtableRecordId, g.id);
-                                                    window.location.href = url;
-                                                } catch (err: any) {
-                                                    alert(err.message || "Error al obtener URL de pago");
-                                                }
-                                            }}
-                                        >
-                                            Configurar Pago
-                                        </Button>
-                                    ) : (
-                                        <span className="text-sm font-medium text-blue-600 flex items-center">
-                                            Ver detalle <ChevronRight className="w-4 h-4 ml-1" />
+                                    <div className="flex flex-col items-end space-y-2">
+                                        {g.status === "PendingPayment" && (
+                                            <Button 
+                                                size="sm" 
+                                                className="bg-green-600 hover:bg-green-700 h-8 text-xs px-3 shadow-sm"
+                                                onClick={async (e) => {
+                                                    e.stopPropagation();
+                                                    try {
+                                                        const url = await paymentService.getSetupUrl(user!.airtableRecordId, g.id);
+                                                        window.location.href = url;
+                                                    } catch (err: any) {
+                                                        alert(err.message || "Error al obtener URL de pago");
+                                                    }
+                                                }}
+                                            >
+                                                Cargar Tarjeta
+                                            </Button>
+                                        )}
+                                        <span className="text-xs font-medium text-gray-400 flex items-center hover:text-blue-600 transition-colors">
+                                            Ver detalle <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
                                         </span>
-                                    )}
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
