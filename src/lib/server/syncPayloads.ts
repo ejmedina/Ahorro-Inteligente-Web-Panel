@@ -11,7 +11,7 @@ export async function syncNegotiationsStatus(userId: string, hasMethods: boolean
     const sourceStatus = hasMethods ? 'PendingPayment' : 'Pending';
 
     try {
-        const formula = `AND({${NEGOTIATION_FIELDS.USER}}='${userId}', {${NEGOTIATION_FIELDS.STATUS}}='${sourceStatus}')`;
+        const formula = `AND(SEARCH('${userId}', ARRAYJOIN({${NEGOTIATION_FIELDS.USER}})), {${NEGOTIATION_FIELDS.STATUS}}='${sourceStatus}')`;
         const url = `https://api.airtable.com/v0/${config.baseId}/${config.negotiationsTableId}?filterByFormula=${encodeURIComponent(formula)}`;
         
         const res = await fetch(url, {

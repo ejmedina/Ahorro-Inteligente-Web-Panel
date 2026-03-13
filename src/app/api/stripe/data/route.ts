@@ -34,16 +34,13 @@ export async function GET() {
         let payments = initialPayments;
 
         // ---- AUTOCORRECCIÓN DE DUPLICADOS ----
-        // Si no encontramos métodos en el customer actual, buscamos si hay otro con el mismo email
-        // que sí los tenga (común si se crearon varios clientes por error).
         if (paymentMethods.length === 0) {
             const betterCustomer = await getStripeCustomer(user.email, user.fullName);
             if (betterCustomer.id !== customerId) {
-                console.log(`[api/stripe/data] Corrigiendo customer ID de ${customerId} a ${betterCustomer.id} para ${user.email}`);
+                console.log(`[api/stripe/data] Corrigiendo customer ID de ${customerId} a ${betterCustomer.id}`);
                 customerId = betterCustomer.id;
                 await updateUser(user.recordId, { stripeCustomerId: customerId });
                 
-                // Recargamos datos con el customer correcto
                 const [newMethods, newPayments] = await Promise.all([
                     getPaymentMethods(customerId),
                     getPaymentHistory(customerId)
@@ -53,21 +50,24 @@ export async function GET() {
             }
         }
 
-        const config = getAirtableConfig();
-
         // ---- SINCRONIZACIÓN AUTOMÁTICA ----
-        // Sincronizamos estados según si tiene o no tarjetas (Upgrade o Downgrade)
         const hasMethods = paymentMethods.length > 0;
         const { syncNegotiationsStatus } = require('@/lib/server/syncPayloads');
         await syncNegotiationsStatus(user.recordId, hasMethods);
 
-        // Obtenemos el medio de pago default si existe para marcarlo
-        const defaultPmId = await (async () => {
-            const Stripe = require('stripe');
-            const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY as string);
-            const customer = await stripeInstance.customers.retrieve(customerId);
-            return (customer as any).invoice_settings?.default_payment_method;
-        })();
+        // ---- MANEJO DE MEDIO POR DEFECTO ----
+        const Stripe = require('stripe');
+        const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+        const customer = await stripeInstance.customers.retrieve(customerId);
+        let defaultPmId = (customer as any).invoice_settings?.default_payment_method;
+
+        // Si hay uno solo y no es el default, lo forzamos como default en Stripe
+        if (paymentMethods.length === 1 && !defaultPmId) {
+            defaultPmId = paymentMethods[0].id;
+            await stripeInstance.customers.update(customerId, {
+                invoice_settings: { default_payment_method: defaultPmId }
+            });
+        }
 
         return NextResponse.json({
             success: true,
@@ -78,7 +78,7 @@ export async function GET() {
                 last4: pm.card?.last4,
                 expMonth: pm.card?.exp_month,
                 expYear: pm.card?.exp_year,
-                isDefault: pm.id === defaultPmId || (paymentMethods.length === 1)
+                isDefault: pm.id === defaultPmId
             })),
             payments: payments.map(p => ({
                 id: p.id,

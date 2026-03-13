@@ -52,14 +52,31 @@ export async function GET(req: NextRequest) {
         
         if (userRes.ok) {
             const userData = await userRes.json();
-            const customerId = userData.fields[FIELDS.STRIPE_CUSTOMER_ID];
+            let customerId = userData.fields[FIELDS.STRIPE_CUSTOMER_ID];
+            const fullName = userData.fields[FIELDS.FULL_NAME];
+            const email = userData.fields[FIELDS.EMAIL];
             
+            const { getPaymentMethods, getStripeCustomer } = require('@/lib/server/stripe');
+            const { syncNegotiationsStatus } = require('@/lib/server/syncPayloads');
+            const { updateUser } = require('@/lib/server/users');
+
+            let methods = [];
             if (customerId) {
-                const { getPaymentMethods } = require('@/lib/server/stripe');
-                const { syncNegotiationsStatus } = require('@/lib/server/syncPayloads');
-                const methods = await getPaymentMethods(customerId);
-                await syncNegotiationsStatus(userId, methods.length > 0);
+                methods = await getPaymentMethods(customerId);
             }
+
+            // Si el customer actual no tiene métodos, intentamos buscar uno mejor (autocorrección)
+            if (methods.length === 0) {
+                const betterCustomer = await getStripeCustomer(email, fullName);
+                if (betterCustomer.id !== customerId) {
+                    console.log(`[api/gestiones] Auto-corrigiendo customer ID de ${customerId} a ${betterCustomer.id}`);
+                    customerId = betterCustomer.id;
+                    await updateUser(userId, { stripeCustomerId: customerId });
+                    methods = await getPaymentMethods(customerId);
+                }
+            }
+
+            await syncNegotiationsStatus(userId, methods.length > 0);
         }
 
         const gestiones = await getUserNegotiations(userId, session.email);
