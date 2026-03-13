@@ -14,18 +14,23 @@ import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
 import { Button } from "@/components/ui/Button";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { FileText, Plus, ChevronRight } from "lucide-react";
+import { FileText, Plus, ChevronRight, AlertTriangle } from "lucide-react";
 
 export default function GestionesPage() {
     const { user } = useAuth();
     const router = useRouter();
     const [gestiones, setGestiones] = useState<ManagementRequest[]>([]);
+    const [hasPaymentMethods, setHasPaymentMethods] = useState<boolean | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (user?.airtableRecordId) {
-            managementService.getUserGestiones(user.airtableRecordId).then((data) => {
-                setGestiones(data);
+            Promise.all([
+                managementService.getUserGestiones(user.airtableRecordId),
+                paymentService.getPaymentMethods(user.airtableRecordId)
+            ]).then(([gestionesData, methodsData]) => {
+                setGestiones(gestionesData);
+                setHasPaymentMethods(methodsData.length > 0);
                 setLoading(false);
             });
         }
@@ -58,6 +63,26 @@ export default function GestionesPage() {
                     </Button>
                 </Link>
             </div>
+
+            {hasPaymentMethods === false && gestiones.some(g => g.status === 'PendingPayment') && (
+                <Card className="bg-amber-50 border-amber-200">
+                    <CardContent className="p-4 flex items-start space-x-3">
+                        <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                            <h4 className="text-sm font-semibold text-amber-900">Acción Requerida</h4>
+                            <p className="text-sm text-amber-800 mt-1">
+                                Tus gestiones están pausadas porque no tenés un medio de pago válido. 
+                                Necesitamos que cargues una tarjeta para poder avanzar con las negociaciones.
+                            </p>
+                            <Link href="/app/medios-de-pago">
+                                <Button variant="ghost" size="sm" className="mt-3 text-amber-900 hover:bg-amber-100 p-0 h-auto font-bold border-b border-amber-900 rounded-none">
+                                    Cargar medio de pago ahora
+                                </Button>
+                            </Link>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {gestiones.length === 0 ? (
                 <EmptyState
