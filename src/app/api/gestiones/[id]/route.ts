@@ -18,10 +18,10 @@ export async function GET(
             return NextResponse.json({ error: 'Gestión no encontrada' }, { status: 404 });
         }
 
-        // Podríamos verificar que la gestión pertenezca al usuario de la sesión
-        // if (negotiation.userId !== session.airtableRecordId) {
-        //     return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
-        // }
+        // Verificamos que la gestión pertenezca al usuario de la sesión (Seguridad: No IDOR)
+        if (negotiation.userId !== session.airtableRecordId) {
+            return NextResponse.json({ error: 'No autorizado para ver esta gestión' }, { status: 403 });
+        }
 
         return NextResponse.json({
             success: true,

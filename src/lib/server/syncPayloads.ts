@@ -1,4 +1,4 @@
-import { getAirtableConfig, NEGOTIATION_FIELDS } from './airtableFieldIds';
+import { getAirtableConfig, NEGOTIATION_FIELDS, sanitizeAirtableValue } from './airtableFieldIds';
 
 /**
  * Sincroniza el estado de las gestiones según la existencia de medios de pago.
@@ -12,12 +12,15 @@ export async function syncNegotiationsStatus(userId: string, hasMethods: boolean
     const sourceStatus = hasMethods ? 'PendingPayment' : 'Pending';
 
     try {
-        // Usamos una fórmula más robusta para encontrar las gestiones del usuario
-        const userFilter = email 
-            ? `{${NEGOTIATION_FIELDS.EMAIL_LOOKUP}}='${email}'`
-            : `FIND('${userId}', {${NEGOTIATION_FIELDS.USER}} & "")`;
+        // Usamos una fórmula más robusta para encontrar las gestiones del usuario (Seguridad: Sanitizado)
+        const sUserId = sanitizeAirtableValue(userId);
+        const sSourceStatus = sanitizeAirtableValue(sourceStatus);
         
-        const formula = `AND(${userFilter}, {${NEGOTIATION_FIELDS.STATUS}}='${sourceStatus}')`;
+        const userFilter = email 
+            ? `{${NEGOTIATION_FIELDS.EMAIL_LOOKUP}}='${sanitizeAirtableValue(email)}'`
+            : `FIND('${sUserId}', {${NEGOTIATION_FIELDS.USER}} & "")`;
+        
+        const formula = `AND(${userFilter}, {${NEGOTIATION_FIELDS.STATUS}}='${sSourceStatus}')`;
         const url = `https://api.airtable.com/v0/${config.baseId}/${config.negotiationsTableId}?filterByFormula=${encodeURIComponent(formula)}&returnFieldsByFieldId=1`;
         
         const res = await fetch(url, {

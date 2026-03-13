@@ -60,3 +60,13 @@ export const NEGOTIATION_FIELDS = {
     PROMOTION_END: 'fld5GJOQ9atkZMdoa',
     DURATION: 'fldU6Q2c9BWpkWdpI',
 } as const;
+
+/**
+ * Sanitiza un valor para ser usado dentro de una fórmula de Airtable (filterByFormula).
+ * Escapa las comillas simples para prevenir inyección de lógica en las fórmulas.
+ */
+export function sanitizeAirtableValue(val: string): string {
+    if (!val) return '';
+    // En las fórmulas de Airtable, las comillas simples se escapan con backslash \'
+    return val.replace(/'/g, "\\'");
+}

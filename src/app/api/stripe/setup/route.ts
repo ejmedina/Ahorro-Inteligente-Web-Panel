@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/server/session';
 import { findUserByEmail, updateUser } from '@/lib/server/users';
 import { getStripeCustomer } from '@/lib/server/stripe';
-import { getAirtableConfig, NEGOTIATION_FIELDS } from '@/lib/server/airtableFieldIds';
+import { getAirtableConfig, NEGOTIATION_FIELDS, sanitizeAirtableValue } from '@/lib/server/airtableFieldIds';
 
 export async function POST(req: NextRequest) {
     try {
@@ -17,10 +17,26 @@ export async function POST(req: NextRequest) {
 
         const config = getAirtableConfig();
 
-        // Si no viene negotiationId, intentamos buscar una que esté Pendiente de Pago
-        if (!negotiationId) {
-            console.log(`[stripe/setup] No negotiationId provided for user ${user.recordId}. Searching for PendingPayment gestiones...`);
-            const url = `https://api.airtable.com/v0/${config.baseId}/${config.negotiationsTableId}?filterByFormula=${encodeURIComponent(`AND({${NEGOTIATION_FIELDS.USER}}='${user.recordId}', {${NEGOTIATION_FIELDS.STATUS}}='PendingPayment')`)}&maxRecords=1`;
+        // Validar si el negotiationId proporcionado pertenece al usuario (Seguridad: No IDOR)
+        if (negotiationId) {
+            const checkUrl = `https://api.airtable.com/v0/${config.baseId}/${config.negotiationsTableId}/${negotiationId}?returnFieldsByFieldId=1`;
+            const checkRes = await fetch(checkUrl, {
+                headers: { 'Authorization': `Bearer ${config.apiKey}` }
+            });
+            if (checkRes.ok) {
+                const checkData = await checkRes.json();
+                const recordUser = checkData.fields[NEGOTIATION_FIELDS.USER]?.[0];
+                if (recordUser !== user.recordId) {
+                    return NextResponse.json({ error: 'La gestión no pertenece al usuario' }, { status: 403 });
+                }
+            } else {
+                return NextResponse.json({ error: 'Gestión no encontrada' }, { status: 404 });
+            }
+        } else {
+            // Si no viene negotiationId, intentamos buscar una que esté Pendiente de Pago
+            console.log(`[stripe/setup] No negotiationId provided for user ${user.recordId}. Searching...`);
+            const sUserId = sanitizeAirtableValue(user.recordId);
+            const url = `https://api.airtable.com/v0/${config.baseId}/${config.negotiationsTableId}?filterByFormula=${encodeURIComponent(`AND(FIND('${sUserId}', {${NEGOTIATION_FIELDS.USER}} & ""), {${NEGOTIATION_FIELDS.STATUS}}='PendingPayment')`)}&maxRecords=1&returnFieldsByFieldId=1`;
             const searchRes = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${config.apiKey}` }
             });
@@ -28,7 +44,6 @@ export async function POST(req: NextRequest) {
                 const searchData = await searchRes.json();
                 if (searchData.records && searchData.records.length > 0) {
                     negotiationId = searchData.records[0].id;
-                    console.log(`[stripe/setup] Found pending negotiation: ${negotiationId}`);
                 }
             }
         }

@@ -1,4 +1,4 @@
-import { getAirtableConfig, INVOICE_FIELDS, NEGOTIATION_FIELDS, FIELDS } from './airtableFieldIds';
+import { getAirtableConfig, INVOICE_FIELDS, NEGOTIATION_FIELDS, FIELDS, sanitizeAirtableValue } from './airtableFieldIds';
 import { getPaymentMethods } from './stripe';
 import { put } from '@vercel/blob';
 
@@ -97,9 +97,13 @@ export async function getUserNegotiations(userId: string, email?: string) {
     const config = getAirtableConfig();
 
     // Priorizar búsqueda por email si está disponible, es más robusta en este esquema
+    // Seguridad: Sanitizar valores para la fórmula
+    const sUserId = sanitizeAirtableValue(userId);
+    const sEmail = email ? sanitizeAirtableValue(email) : '';
+
     const formula = email 
-        ? `{${NEGOTIATION_FIELDS.EMAIL_LOOKUP}}='${email}'`
-        : `SEARCH('${userId}', ARRAYJOIN({${NEGOTIATION_FIELDS.USER}}))`;
+        ? `{${NEGOTIATION_FIELDS.EMAIL_LOOKUP}}='${sEmail}'`
+        : `FIND('${sUserId}', {${NEGOTIATION_FIELDS.USER}} & "")`;
 
     const url = `https://api.airtable.com/v0/${config.baseId}/${config.negotiationsTableId}?filterByFormula=${encodeURIComponent(formula)}&returnFieldsByFieldId=1`;
     

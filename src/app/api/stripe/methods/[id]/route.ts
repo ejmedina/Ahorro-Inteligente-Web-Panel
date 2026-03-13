@@ -22,7 +22,14 @@ export async function DELETE(
 
         const methodId = params.id;
 
-        // 1. Eliminar en Stripe
+        // 1. Verificar propiedad del medio de pago (Seguridad: No IDOR)
+        const pMethods = await getPaymentMethods(user.stripeCustomerId);
+        const exists = pMethods.find(m => m.id === methodId);
+        if (!exists) {
+            return NextResponse.json({ error: 'Medio de pago no encontrado o no pertenece al usuario' }, { status: 403 });
+        }
+
+        // 2. Eliminar en Stripe
         await deletePaymentMethod(methodId);
 
         // 2. Verificar si quedan métodos para sincronizar estados si es necesario
@@ -51,7 +58,14 @@ export async function PATCH(
 
         const methodId = params.id;
 
-        // Establecer como default en Stripe
+        // 1. Verificar propiedad del medio de pago (Seguridad: No IDOR)
+        const pMethods = await getPaymentMethods(user.stripeCustomerId);
+        const exists = pMethods.find(m => m.id === methodId);
+        if (!exists) {
+            return NextResponse.json({ error: 'Medio de pago no encontrado o no pertenece al usuario' }, { status: 403 });
+        }
+
+        // 2. Establecer como default en Stripe
         await stripe.customers.update(user.stripeCustomerId, {
             invoice_settings: {
                 default_payment_method: methodId,

@@ -1,4 +1,4 @@
-import { getAirtableConfig, FIELDS } from './airtableFieldIds';
+import { getAirtableConfig, FIELDS, sanitizeAirtableValue } from './airtableFieldIds';
 
 export interface AirtableUser {
     recordId: string;
@@ -60,7 +60,7 @@ export async function findUserByEmail(email: string): Promise<AirtableUser | nul
     email = email.trim().toLowerCase();
 
     const { usersTableId } = getAirtableConfig();
-    const formula = encodeURIComponent(`LOWER({Email Address})="${email}"`);
+    const formula = encodeURIComponent(`LOWER({${FIELDS.EMAIL}})='${sanitizeAirtableValue(email)}'`);
     const url = `${buildAirtableUrl(usersTableId)}?filterByFormula=${formula}&maxRecords=1&returnFieldsByFieldId=1`;
 
     const res = await fetch(url, { headers: getHeaders(), cache: 'no-store' });
