@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { managementService } from "@/lib/services/managementService";
+import { paymentService } from "@/lib/services/paymentService";
 import { ManagementRequest } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/Card";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -103,9 +104,27 @@ export default function GestionesPage() {
                                 </div>
                                 <div className="flex flex-col items-end space-y-3">
                                     <StatusBadge status={g.status} />
-                                    <span className="text-sm font-medium text-blue-600 flex items-center">
-                                        Ver detalle <ChevronRight className="w-4 h-4 ml-1" />
-                                    </span>
+                                    {g.status === "PendingPayment" ? (
+                                        <Button 
+                                            size="sm" 
+                                            className="bg-green-600 hover:bg-green-700 h-8"
+                                            onClick={async (e) => {
+                                                e.stopPropagation();
+                                                try {
+                                                    const url = await paymentService.getSetupUrl(user!.airtableRecordId, g.id);
+                                                    window.location.href = url;
+                                                } catch (err: any) {
+                                                    alert(err.message || "Error al obtener URL de pago");
+                                                }
+                                            }}
+                                        >
+                                            Configurar Pago
+                                        </Button>
+                                    ) : (
+                                        <span className="text-sm font-medium text-blue-600 flex items-center">
+                                            Ver detalle <ChevronRight className="w-4 h-4 ml-1" />
+                                        </span>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>

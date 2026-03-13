@@ -228,14 +228,30 @@ export default function GestionDetailPage() {
                 )}
 
                 {/* Actions */}
-                {canCancel && (
-                    <div className="flex justify-end pt-4">
+                <div className="flex justify-end space-x-4 pt-4">
+                    {gestion.status === "PendingPayment" && (
+                        <Button 
+                            onClick={async () => {
+                                try {
+                                    const url = await paymentService.getSetupUrl(user!.airtableRecordId, gestion.id);
+                                    window.location.href = url;
+                                } catch (err: any) {
+                                    alert(err.message || "Error al obtener URL de pago");
+                                }
+                            }}
+                            className="bg-green-600 hover:bg-green-700"
+                        >
+                            <TrendingUp className="w-4 h-4 mr-2" />
+                            Configurar medio de pago
+                        </Button>
+                    )}
+                    {canCancel && (
                         <Button variant="danger" onClick={handleCancel} isLoading={canceling}>
                             <Ban className="w-4 h-4 mr-2" />
                             Cancelar Gestión
                         </Button>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
         </div>
     );
