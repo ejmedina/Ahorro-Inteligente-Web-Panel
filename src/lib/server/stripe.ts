@@ -7,11 +7,23 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 export async function getStripeCustomer(email: string, fullName: string) {
     const customers = await stripe.customers.list({
         email: email,
-        limit: 1,
+        limit: 10,
     });
 
     if (customers.data.length > 0) {
-        return customers.data[0];
+        // Si hay varios, buscamos el que tenga medios de pago
+        for (const customer of customers.data) {
+            const methods = await stripe.paymentMethods.list({
+                customer: customer.id,
+                type: 'card',
+                limit: 1
+            });
+            if (methods.data.length > 0) {
+                return customer;
+            }
+        }
+        // Si ninguno tiene, devolvemos el más reciente
+        return customers.data.sort((a, b) => b.created - a.created)[0];
     }
 
     // Create if not exists

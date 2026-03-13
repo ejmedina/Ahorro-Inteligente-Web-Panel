@@ -25,10 +25,33 @@ export async function GET() {
             await updateUser(user.recordId, { stripeCustomerId: customerId });
         }
 
-        const [paymentMethods, payments] = await Promise.all([
+        const [initialMethods, initialPayments] = await Promise.all([
             getPaymentMethods(customerId),
             getPaymentHistory(customerId)
         ]);
+
+        let paymentMethods = initialMethods;
+        let payments = initialPayments;
+
+        // ---- AUTOCORRECCIÓN DE DUPLICADOS ----
+        // Si no encontramos métodos en el customer actual, buscamos si hay otro con el mismo email
+        // que sí los tenga (común si se crearon varios clientes por error).
+        if (paymentMethods.length === 0) {
+            const betterCustomer = await getStripeCustomer(user.email, user.fullName);
+            if (betterCustomer.id !== customerId) {
+                console.log(`[api/stripe/data] Corrigiendo customer ID de ${customerId} a ${betterCustomer.id} para ${user.email}`);
+                customerId = betterCustomer.id;
+                await updateUser(user.recordId, { stripeCustomerId: customerId });
+                
+                // Recargamos datos con el customer correcto
+                const [newMethods, newPayments] = await Promise.all([
+                    getPaymentMethods(customerId),
+                    getPaymentHistory(customerId)
+                ]);
+                paymentMethods = newMethods;
+                payments = newPayments;
+            }
+        }
 
         const config = getAirtableConfig();
 
