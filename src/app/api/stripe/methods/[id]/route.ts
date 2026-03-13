@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/server/session';
 import { findUserByEmail, updateUser } from '@/lib/server/users';
-import { deletePaymentMethod, getPaymentMethods } from '@/lib/server/stripe';
+import { deletePaymentMethod, getPaymentMethods, getStripe } from '@/lib/server/stripe';
 import { syncNegotiationsStatus } from '@/lib/server/syncPayloads';
-import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-    apiVersion: '2026-02-25.clover' as any,
-});
+// Eliminamos la instanciación a nivel de módulo que rompía el build de Vercel
 
 export async function DELETE(
     req: NextRequest,
@@ -66,7 +63,7 @@ export async function PATCH(
         }
 
         // 2. Establecer como default en Stripe
-        await stripe.customers.update(user.stripeCustomerId, {
+        await getStripe().customers.update(user.stripeCustomerId, {
             invoice_settings: {
                 default_payment_method: methodId,
             },

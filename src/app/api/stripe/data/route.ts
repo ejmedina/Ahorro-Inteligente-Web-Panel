@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/server/session';
 import { findUserByEmail, updateUser } from '@/lib/server/users';
-import { getStripeCustomer, getPaymentMethods, getPaymentHistory } from '@/lib/server/stripe';
+import { getStripeCustomer, getPaymentMethods, getPaymentHistory, getStripe } from '@/lib/server/stripe';
 import { getAirtableConfig, NEGOTIATION_FIELDS } from '@/lib/server/airtableFieldIds';
 
 export async function GET() {
@@ -56,8 +56,7 @@ export async function GET() {
         await syncNegotiationsStatus(user.recordId, hasMethods, user.email);
 
         // ---- MANEJO DE MEDIO POR DEFECTO ----
-        const Stripe = require('stripe');
-        const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+        const stripeInstance = getStripe();
         const customer = await stripeInstance.customers.retrieve(customerId);
         let defaultPmId = (customer as any).invoice_settings?.default_payment_method;
 
