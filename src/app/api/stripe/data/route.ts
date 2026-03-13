@@ -55,55 +55,30 @@ export async function GET() {
 
         const config = getAirtableConfig();
 
-        // ---- SINCRONIZACIÓN LAZY ----
-        // Si el usuario ya tiene medios de pago, todas sus gestiones "PendingPayment"
-        // deben pasar a "Pending" para indicar que ya podemos procesarlas.
-        if (paymentMethods.length > 0) {
-            try {
-                const searchUrl = `https://api.airtable.com/v0/${config.baseId}/${config.negotiationsTableId}?filterByFormula=${encodeURIComponent(`AND({${NEGOTIATION_FIELDS.USER}}='${user.recordId}', {${NEGOTIATION_FIELDS.STATUS}}='PendingPayment')`)}`;
-                const searchRes = await fetch(searchUrl, {
-                    headers: { 'Authorization': `Bearer ${config.apiKey}` }
-                });
-                
-                if (searchRes.ok) {
-                    const searchData = await searchRes.json();
-                    const pendingRecords = searchData.records || [];
-                    
-                    if (pendingRecords.length > 0) {
-                        console.log(`[api/stripe/data] Sincronizando ${pendingRecords.length} gestiones de PendingPayment a Pending para el usuario ${user.recordId}`);
-                        
-                        // Actualizamos en lote (Airtable permite hasta 10 por cada PATCH)
-                        // Para simplificar ahora lo hacemos una por una o un pequeño loop
-                        for (const rec of pendingRecords) {
-                            await fetch(`https://api.airtable.com/v0/${config.baseId}/${config.negotiationsTableId}/${rec.id}`, {
-                                method: 'PATCH',
-                                headers: {
-                                    'Authorization': `Bearer ${config.apiKey}`,
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    fields: { [NEGOTIATION_FIELDS.STATUS]: 'Pending' }
-                                })
-                            });
-                        }
-                    }
-                }
-            } catch (syncErr) {
-                console.error('[api/stripe/data] Error en la sincronización de estados:', syncErr);
-                // No bloqueamos la respuesta principal si falla la sincronización
-            }
-        }
+        // ---- SINCRONIZACIÓN AUTOMÁTICA ----
+        // Sincronizamos estados según si tiene o no tarjetas (Upgrade o Downgrade)
+        const hasMethods = paymentMethods.length > 0;
+        const { syncNegotiationsStatus } = require('@/lib/server/syncPayloads');
+        await syncNegotiationsStatus(user.recordId, hasMethods);
+
+        // Obtenemos el medio de pago default si existe para marcarlo
+        const defaultPmId = await (async () => {
+            const Stripe = require('stripe');
+            const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+            const customer = await stripeInstance.customers.retrieve(customerId);
+            return (customer as any).invoice_settings?.default_payment_method;
+        })();
 
         return NextResponse.json({
             success: true,
-            hasMethods: paymentMethods.length > 0,
+            hasMethods: hasMethods,
             methods: paymentMethods.map(pm => ({
                 id: pm.id,
                 brand: pm.card?.brand,
                 last4: pm.card?.last4,
                 expMonth: pm.card?.exp_month,
                 expYear: pm.card?.exp_year,
-                isDefault: pm.id === (user as any).defaultPaymentMethodId // Opcional si lo manejamos luego
+                isDefault: pm.id === defaultPmId || (paymentMethods.length === 1)
             })),
             payments: payments.map(p => ({
                 id: p.id,

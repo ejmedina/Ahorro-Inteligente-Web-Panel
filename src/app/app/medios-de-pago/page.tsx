@@ -43,15 +43,31 @@ export default function MediosDePagoPage() {
     };
 
     const setAsDefault = async (id: string) => {
-        if (!user?.airtableRecordId) return;
-        await paymentService.setDefaultMethod(user.airtableRecordId, id);
-        loadMethods();
+        if (!user?.airtableRecordId || redirecting) return;
+        setRedirecting(true);
+        try {
+            await paymentService.setDefaultMethod(user.airtableRecordId, id);
+            await loadMethods();
+        } catch (err) {
+            alert("Error al establecer medio de pago principal");
+        } finally {
+            setRedirecting(false);
+        }
     };
 
     const deleteMethod = async (id: string) => {
-        if (!window.confirm("¿Estás seguro de eliminar este medio de pago?")) return;
-        await paymentService.removeMethod(id);
-        loadMethods();
+        if (redirecting) return;
+        if (!window.confirm("¿Estás seguro de eliminar este medio de pago? Si es el único, tus gestiones activas se pausarán.")) return;
+        
+        setRedirecting(true);
+        try {
+            await paymentService.removeMethod(id);
+            await loadMethods();
+        } catch (err) {
+            alert("Error al eliminar medio de pago");
+        } finally {
+            setRedirecting(false);
+        }
     };
 
     if (loading) {

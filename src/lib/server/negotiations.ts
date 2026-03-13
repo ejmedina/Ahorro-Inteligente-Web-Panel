@@ -1,13 +1,24 @@
-import { getAirtableConfig, INVOICE_FIELDS, NEGOTIATION_FIELDS } from './airtableFieldIds';
-import { stripeAdapter } from '../adapters/stripeAdapter';
+import { getAirtableConfig, INVOICE_FIELDS, NEGOTIATION_FIELDS, FIELDS } from './airtableFieldIds';
+import { getPaymentMethods } from './stripe';
 import { put } from '@vercel/blob';
 
 export async function createNegotiationWithInvoice(userId: string, file: File, notes?: string) {
     const config = getAirtableConfig();
 
-    // 1. Verificar si el usuario tiene métodos de pago (Usando el mock actual)
-    const paymentMethods = await stripeAdapter.getPaymentMethods(userId);
-    const hasPaymentMethod = paymentMethods.length > 0;
+    // 1. Verificar si el usuario tiene métodos de pago reales
+    // Obtenemos el registro del usuario para ver su stripeCustomerId
+    const userRes = await fetch(`https://api.airtable.com/v0/${config.baseId}/${config.usersTableId}/${userId}`, {
+        headers: { 'Authorization': `Bearer ${config.apiKey}` }
+    });
+    const userData = await userRes.json();
+    const customerId = userData.fields[FIELDS.STRIPE_CUSTOMER_ID];
+    
+    let hasPaymentMethod = false;
+    if (customerId) {
+        const methods = await getPaymentMethods(customerId);
+        hasPaymentMethod = methods.length > 0;
+    }
+    
     const initialStatus = hasPaymentMethod ? 'Pending' : 'PendingPayment';
 
     // 2. Subir archivo a Vercel Blob

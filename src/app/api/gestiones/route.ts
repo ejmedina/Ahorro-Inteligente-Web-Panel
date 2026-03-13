@@ -41,7 +41,28 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
 
-        const gestiones = await getUserNegotiations(session.airtableRecordId, session.email);
+        const userId = session.airtableRecordId;
+        
+        // 1. Obtener el customerId de Airtable para validar en Stripe
+        const config = require('@/lib/server/airtableFieldIds').getAirtableConfig();
+        const FIELDS = require('@/lib/server/airtableFieldIds').FIELDS;
+        const userRes = await fetch(`https://api.airtable.com/v0/${config.baseId}/${config.usersTableId}/${userId}`, {
+            headers: { 'Authorization': `Bearer ${config.apiKey}` }
+        });
+        
+        if (userRes.ok) {
+            const userData = await userRes.json();
+            const customerId = userData.fields[FIELDS.STRIPE_CUSTOMER_ID];
+            
+            if (customerId) {
+                const { getPaymentMethods } = require('@/lib/server/stripe');
+                const { syncNegotiationsStatus } = require('@/lib/server/syncPayloads');
+                const methods = await getPaymentMethods(customerId);
+                await syncNegotiationsStatus(userId, methods.length > 0);
+            }
+        }
+
+        const gestiones = await getUserNegotiations(userId, session.email);
 
         return NextResponse.json({
             success: true,

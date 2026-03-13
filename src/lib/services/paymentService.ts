@@ -42,12 +42,18 @@ class PaymentService {
         return data.url;
     }
 
-    async setDefaultMethod(userId: string, id: string): Promise<void> {
-        return stripeAdapter.setDefaultPaymentMethod(userId, id);
+    async setDefaultMethod(_userId: string, id: string): Promise<void> {
+        const res = await fetch(`/api/stripe/methods/${id}`, {
+            method: 'PATCH'
+        });
+        if (!res.ok) throw new Error('Error al establecer medio de pago principal');
     }
 
     async removeMethod(id: string): Promise<void> {
-        return stripeAdapter.deletePaymentMethod(id);
+        const res = await fetch(`/api/stripe/methods/${id}`, {
+            method: 'DELETE'
+        });
+        if (!res.ok) throw new Error('Error al eliminar medio de pago');
     }
 }
 
