@@ -23,6 +23,8 @@ export function getAirtableConfig() {
         usersTableId: process.env.AIRTABLE_USERS_TABLE_ID ?? 'tblpuuhAsOfLgQuRA',
         invoicesTableId: 'tblAGJMbj64wTKM1I',
         negotiationsTableId: 'tblsAlKqXrMeLctBM',
+        subscriptionsTableId: 'tblS7BU1CzKgRtxEC',
+        paymentsTableId: 'tblkWaCoR8F3YJfc8',
     };
 }
 
@@ -35,6 +37,7 @@ export const FIELDS = {
     AUTH_STATUS: process.env.AIRTABLE_USERS_FIELD_AUTH_STATUS ?? 'fldyhT2P9LwDER97E',
     LAST_LOGIN_AT: process.env.AIRTABLE_USERS_FIELD_LAST_LOGIN_AT ?? 'fld3nUiqE7n0I2wdn',
     UPDATED_AT: process.env.AIRTABLE_USERS_FIELD_UPDATED_AT ?? 'fldEof20vAryoxrQ1',
+    STRIPE_CUSTOMER_ID: 'fldJbIHc9oAWL8mLU',
 } as const;
 
 export const INVOICE_FIELDS = {

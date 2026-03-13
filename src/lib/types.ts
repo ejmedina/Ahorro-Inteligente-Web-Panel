@@ -63,4 +63,5 @@ export interface Payment {
     issuerName: string;
   };
   createdAt: string;
+  description?: string;
 }

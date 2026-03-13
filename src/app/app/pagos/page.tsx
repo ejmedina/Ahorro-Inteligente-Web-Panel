@@ -62,9 +62,9 @@ export default function PagosPage() {
                                         <Clock className="w-6 h-6" />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-gray-900">Cuota {p.installmentNumber} de 6</h3>
+                                        <h3 className="font-semibold text-gray-900">{p.description || "Ahorro Inteligente"}</h3>
                                         <p className="text-sm text-gray-500 mb-2">
-                                            Generada el {format(new Date(p.createdAt), "dd MMM, yyyy", { locale: es })}
+                                            {format(new Date(p.createdAt), "dd MMM, yyyy HH:mm", { locale: es })}
                                         </p>
                                         {p.paymentMethodSnapshot && (
                                             <p className="text-xs text-gray-500">

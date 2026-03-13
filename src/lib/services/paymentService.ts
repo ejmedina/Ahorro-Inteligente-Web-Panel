@@ -2,17 +2,44 @@ import { Payment, PaymentMethod } from '../types';
 import { stripeAdapter } from '../adapters/stripeAdapter';
 
 class PaymentService {
-    async getPaymentMethods(userId: string): Promise<PaymentMethod[]> {
-        return stripeAdapter.getPaymentMethods(userId);
+    async getPaymentMethods(_userId: string): Promise<PaymentMethod[]> {
+        const res = await fetch('/api/stripe/data');
+        if (!res.ok) throw new Error('Error al obtener medios de pago');
+        const data = await res.json();
+        return data.methods.map((m: any) => ({
+            id: m.id,
+            brand: m.brand,
+            last4: m.last4,
+            issuerName: m.brand.toUpperCase(),
+            isDefault: m.isDefault
+        }));
     }
 
-    async getPayments(userId: string): Promise<Payment[]> {
-        const payments = await stripeAdapter.getPayments(userId);
-        return payments.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    async getPayments(_userId: string): Promise<Payment[]> {
+        const res = await fetch('/api/stripe/data');
+        if (!res.ok) throw new Error('Error al obtener historial de pagos');
+        const data = await res.json();
+        return data.payments.map((p: any) => ({
+            id: p.id,
+            amount: p.amount,
+            status: p.status === 'succeeded' ? 'completed' : p.status,
+            createdAt: p.createdAt,
+            description: p.description || 'Ahorro Inteligente'
+        }));
     }
 
-    async getSetupUrl(userId: string): Promise<string> {
-        return stripeAdapter.getBillingPortalOrSetupUrl(userId);
+    async getSetupUrl(_userId: string, negotiationId?: string): Promise<string> {
+        const res = await fetch('/api/stripe/setup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ negotiationId })
+        });
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'Error al obtener URL de validación');
+        }
+        const data = await res.json();
+        return data.url;
     }
 
     async setDefaultMethod(userId: string, id: string): Promise<void> {

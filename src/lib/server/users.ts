@@ -7,6 +7,7 @@ export interface AirtableUser {
     phone?: string;
     passwordHash?: string;
     authStatus?: string;
+    stripeCustomerId?: string;
 }
 
 interface AirtableRecord {
@@ -50,6 +51,7 @@ function recordToUser(record: AirtableRecord): AirtableUser {
         phone: findValue(FIELDS.PHONE, ['Phone', 'Teléfono', 'Telefono', 'Phone Number']),
         passwordHash: findValue(FIELDS.PASSWORD_HASH, ['Password Hash', 'Contraseña']),
         authStatus: findValue(FIELDS.AUTH_STATUS, ['Auth Status', 'Estado']),
+        stripeCustomerId: findValue(FIELDS.STRIPE_CUSTOMER_ID, ['Stripe Customer ID']),
     };
 }
 
@@ -121,6 +123,7 @@ export interface UpdateUserInput {
     passwordHash?: string;
     authStatus?: string;
     lastLoginAt?: string;
+    stripeCustomerId?: string;
 }
 
 /** Actualiza campos de un usuario existente en Airtable por su recordId. */
@@ -138,6 +141,7 @@ export async function updateUser(recordId: string, input: UpdateUserInput): Prom
     if (input.passwordHash !== undefined) fields[FIELDS.PASSWORD_HASH] = input.passwordHash;
     if (input.authStatus !== undefined) fields[FIELDS.AUTH_STATUS] = input.authStatus;
     if (input.lastLoginAt !== undefined) fields[FIELDS.LAST_LOGIN_AT] = input.lastLoginAt;
+    if (input.stripeCustomerId !== undefined) fields[FIELDS.STRIPE_CUSTOMER_ID] = input.stripeCustomerId;
 
     const res = await fetch(`${url}?returnFieldsByFieldId=1`, {
         method: 'PATCH',
