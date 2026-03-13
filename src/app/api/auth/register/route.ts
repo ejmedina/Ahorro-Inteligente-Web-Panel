@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { findUserByEmail, createUser } from '@/lib/server/users';
-import { buildSetSessionCookieHeader, SessionPayload } from '@/lib/server/session';
+import crypto from 'crypto';
+import { findUserByEmail, createUser, updateUser } from '@/lib/server/users';
+import { sendVerificationEmail } from '@/lib/server/email';
 
 export async function POST(request: NextRequest) {
     try {
@@ -38,11 +39,11 @@ export async function POST(request: NextRequest) {
         // --- Buscar usuario en Airtable ---
         const existingUser = await findUserByEmail(normalizedEmail);
 
-        let sessionPayload: SessionPayload;
-
         if (!existingUser) {
-            // Caso 1: Usuario nuevo → crear registro
+            // Caso 1: Usuario nuevo → crear registro en estado 'pending'
             const passwordHash = await bcrypt.hash(password, 10);
+            const verificationToken = crypto.randomBytes(32).toString('hex');
+            
             const created = await createUser({
                 fullName: trimmedName,
                 email: normalizedEmail,
@@ -50,61 +51,50 @@ export async function POST(request: NextRequest) {
                 passwordHash,
             });
 
-            sessionPayload = {
-                airtableRecordId: created.recordId,
-                fullName: created.fullName,
-                email: created.email,
-                phone: created.phone,
-            };
-        } else if (!existingUser.passwordHash) {
-            // Caso 2: El email ya existe pero la cuenta no tiene contraseña asignada.
-            // SEGURIDAD: NO se permite activar automáticamente una cuenta existente
-            // desde el formulario de registro. Esto evita que alguien tome control
-            // de una cuenta ajena solo con conocer el email.
-            //
-            // TODO: Implementar un flujo seguro de activación por email
-            //       (envío de OTP o magic link) para este caso.
+            // Guardar el token de verificación
+            await updateUser(created.recordId, { verificationToken });
+
+            // Enviar email de verificación
+            await sendVerificationEmail(normalizedEmail, verificationToken);
+
             return NextResponse.json(
-                {
-                    error:
-                        'Ya existe una cuenta con ese email, pero todavía no fue activada. ' +
-                        'Por ahora no podés activarla automáticamente desde este formulario.',
-                },
-                { status: 409 }
+                { 
+                    success: true, 
+                    message: 'Registro exitoso. Por favor verifica tu email para activar tu cuenta.' 
+                }, 
+                { status: 201 }
+            );
+        } else if (!existingUser.passwordHash) {
+            // Caso 2: El email ya existe pero no tiene contraseña (cuenta no activada)
+            // Generar nuevo token y enviar mail
+            const verificationToken = crypto.randomBytes(32).toString('hex');
+            const passwordHash = await bcrypt.hash(password, 10);
+            
+            await updateUser(existingUser.recordId, { 
+                passwordHash,
+                verificationToken,
+                fullName: trimmedName,
+                phone: trimmedPhone
+            });
+
+            await sendVerificationEmail(normalizedEmail, verificationToken);
+
+            return NextResponse.json(
+                { 
+                    success: true, 
+                    message: 'Se ha enviado un correo de verificación para activar tu cuenta existente.' 
+                }, 
+                { status: 201 }
             );
         } else {
-            // Caso 3: El email ya existe y ya tiene contraseña → no duplicar
+            // Caso 3: El email ya existe y ya tiene contraseña
             return NextResponse.json(
                 { error: 'Ya existe una cuenta con ese email. Iniciá sesión.' },
                 { status: 409 }
             );
         }
-
-        // --- Iniciar sesión con cookie httpOnly ---
-        const cookieHeader = await buildSetSessionCookieHeader(sessionPayload);
-        const response = NextResponse.json(
-            {
-                user: {
-                    airtableRecordId: sessionPayload.airtableRecordId,
-                    fullName: sessionPayload.fullName,
-                    email: sessionPayload.email,
-                    phone: sessionPayload.phone,
-                },
-            },
-            { status: 201 }
-        );
-        response.headers.set('Set-Cookie', cookieHeader);
-        return response;
     } catch (err: unknown) {
         console.error('[auth/register] Error:', err);
-        const message = err instanceof Error ? err.message : 'Error interno del servidor.';
-        // Si es error de configuración de env, dar mensaje claro
-        if (message.includes('Variable de entorno') || message.includes('SESSION_SECRET')) {
-            return NextResponse.json(
-                { error: 'Configuración de servidor incompleta. Revisá las variables de entorno.' },
-                { status: 500 }
-            );
-        }
         return NextResponse.json({ error: 'Error interno del servidor.' }, { status: 500 });
     }
 }

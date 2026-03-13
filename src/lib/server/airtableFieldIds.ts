@@ -38,6 +38,9 @@ export const FIELDS = {
     LAST_LOGIN_AT: process.env.AIRTABLE_USERS_FIELD_LAST_LOGIN_AT ?? 'fld3nUiqE7n0I2wdn',
     UPDATED_AT: process.env.AIRTABLE_USERS_FIELD_UPDATED_AT ?? 'fldEof20vAryoxrQ1',
     STRIPE_CUSTOMER_ID: 'fldJbIHc9oAWL8mLU',
+    VERIFICATION_TOKEN: 'fldVerificationToken',
+    RECOVERY_TOKEN: 'fldRecoveryToken',
+    RECOVERY_EXPIRES: 'fldRecoveryExpires',
 } as const;
 
 export const INVOICE_FIELDS = {

@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -17,10 +17,13 @@ const loginSchema = z.object({
 
 type LoginForm = z.infer<typeof loginSchema>;
 
-export default function LoginPage() {
+function LoginContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { setUser, refreshUser } = useAuth();
-    const [error, setError] = useState("");
+    
+    const [msg, setMsg] = useState(searchParams.get("message") || "");
+    const [error, setError] = useState(searchParams.get("error") || "");
     const [isLoading, setIsLoading] = useState(false);
 
     const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
@@ -30,6 +33,7 @@ export default function LoginPage() {
     const onSubmit = async (data: LoginForm) => {
         setIsLoading(true);
         setError("");
+        setMsg("");
         try {
             const res = await fetch("/api/auth/login", {
                 method: "POST",
@@ -49,7 +53,6 @@ export default function LoginPage() {
             }
             
             await refreshUser();
-            
             router.push("/app/gestiones");
         } catch {
             setError("Error de conexión. Intentá de nuevo.");
@@ -91,6 +94,12 @@ export default function LoginPage() {
                         />
                     </div>
 
+                    {msg && (
+                        <div className="text-sm text-green-600 bg-green-50 p-3 rounded-lg border border-green-100">
+                            {msg}
+                        </div>
+                    )}
+
                     {error && (
                         <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-100">
                             {error}
@@ -118,5 +127,13 @@ export default function LoginPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div>Cargando...</div>}>
+            <LoginContent />
+        </Suspense>
     );
 }

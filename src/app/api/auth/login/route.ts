@@ -40,6 +40,14 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // --- Verificar si la cuenta está verificada ---
+        if (user.authStatus === 'pending') {
+            return NextResponse.json(
+                { error: 'Tu cuenta no está verificada. Por favor, revisá tu casilla de correo.' },
+                { status: 403 }
+            );
+        }
+
         // --- Verificar contraseña ---
         const passwordMatches = await bcrypt.compare(password, user.passwordHash);
         if (!passwordMatches) {
