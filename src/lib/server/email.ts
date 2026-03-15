@@ -39,7 +39,11 @@ async function sendEmail({ to, subject, html }: { to: { email: string, name: str
 }
 
 export async function sendVerificationEmail(email: string, token: string, name: string = 'Usuario') {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL 
+        ? process.env.NEXT_PUBLIC_APP_URL 
+        : process.env.VERCEL_URL 
+            ? `https://${process.env.VERCEL_URL}` 
+            : 'http://localhost:3000';
     const verifyUrl = `${baseUrl}/api/auth/verify?token=${token}`;
 
     const html = `
@@ -64,7 +68,11 @@ export async function sendVerificationEmail(email: string, token: string, name: 
 }
 
 export async function sendRecoveryEmail(email: string, token: string, name: string = 'Usuario') {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL 
+        ? process.env.NEXT_PUBLIC_APP_URL 
+        : process.env.VERCEL_URL 
+            ? `https://${process.env.VERCEL_URL}` 
+            : 'http://localhost:3000';
     const recoveryUrl = `${baseUrl}/reset-password?token=${token}`;
 
     const html = `
