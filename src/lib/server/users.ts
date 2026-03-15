@@ -87,6 +87,7 @@ export interface CreateUserInput {
     email: string;
     phone?: string;
     passwordHash: string;
+    verificationToken?: string;
 }
 
 /** Crea un nuevo usuario en Airtable. Retorna el registro creado. */
@@ -106,6 +107,10 @@ export async function createUser(input: CreateUserInput): Promise<AirtableUser> 
 
     if (input.phone) {
         fields[FIELDS.PHONE] = input.phone;
+    }
+
+    if (input.verificationToken) {
+        fields[FIELDS.VERIFICATION_TOKEN] = input.verificationToken;
     }
 
     const res = await fetch(`${url}?returnFieldsByFieldId=1`, {

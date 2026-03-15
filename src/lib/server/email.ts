@@ -1,16 +1,44 @@
-import nodemailer from 'nodemailer';
+const ZEPTOMAIL_API_KEY = process.env.ZEPTOMAIL_API_KEY;
+const FROM_EMAIL = process.env.ZEPTOMAIL_FROM_EMAIL || 'noreply@ahorrointeligente.com.ar';
+const FROM_NAME = process.env.ZEPTOMAIL_FROM_NAME || 'Ahorro Inteligente';
 
-const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST || 'smtp.zoho.com',
-    port: parseInt(process.env.EMAIL_PORT || '465'),
-    secure: true, // true for 465, false for other ports
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
-});
+async function sendEmail({ to, subject, html }: { to: { email: string, name: string }[], subject: string, html: string }) {
+    if (!ZEPTOMAIL_API_KEY) {
+        console.warn('ZEPTOMAIL_API_KEY no configurada. El mail no se enviará.');
+        return;
+    }
 
-export async function sendVerificationEmail(email: string, token: string) {
+    const authHeader = ZEPTOMAIL_API_KEY.startsWith('Zoho-enczapikey') 
+        ? ZEPTOMAIL_API_KEY 
+        : `Zoho-enczapikey ${ZEPTOMAIL_API_KEY}`;
+
+    const response = await fetch('https://api.zeptomail.com/v1.1/email', {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': authHeader,
+        },
+        body: JSON.stringify({
+            from: { address: FROM_EMAIL, name: FROM_NAME },
+            to: to.map(t => ({
+                email_address: { address: t.email, name: t.name }
+            })),
+            subject: subject,
+            htmlbody: html,
+        }),
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        console.error('Error enviando email via ZeptoMail:', error);
+        throw new Error('Error al enviar el email');
+    }
+
+    return response.json();
+}
+
+export async function sendVerificationEmail(email: string, token: string, name: string = 'Usuario') {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const verifyUrl = `${baseUrl}/api/auth/verify?token=${token}`;
 
@@ -28,15 +56,14 @@ export async function sendVerificationEmail(email: string, token: string) {
         </div>
     `;
 
-    await transporter.sendMail({
-        from: `"Ahorro Inteligente" <${process.env.EMAIL_USER}>`,
-        to: email,
+    await sendEmail({
+        to: [{ email, name }],
         subject: 'Verifica tu cuenta - Ahorro Inteligente',
         html,
     });
 }
 
-export async function sendRecoveryEmail(email: string, token: string) {
+export async function sendRecoveryEmail(email: string, token: string, name: string = 'Usuario') {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const recoveryUrl = `${baseUrl}/reset-password?token=${token}`;
 
@@ -55,10 +82,10 @@ export async function sendRecoveryEmail(email: string, token: string) {
         </div>
     `;
 
-    await transporter.sendMail({
-        from: `"Ahorro Inteligente" <${process.env.EMAIL_USER}>`,
-        to: email,
+    await sendEmail({
+        to: [{ email, name }],
         subject: 'Recuperar Contraseña - Ahorro Inteligente',
         html,
     });
 }
+

@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
                 recoveryExpiresAt: expires.toISOString()
             });
 
-            await sendRecoveryEmail(user.email, recoveryToken);
+            await sendRecoveryEmail(user.email, recoveryToken, user.fullName);
         }
 
         // Siempre devolvemos éxito para no revelar emails registrados

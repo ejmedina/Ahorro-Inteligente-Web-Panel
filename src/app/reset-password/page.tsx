@@ -48,8 +48,8 @@ function ResetPasswordContent() {
 
             const json = await res.json();
             if (res.ok) {
-                setMsg(json.message);
-                setTimeout(() => router.push("/login"), 3000);
+                setMsg(json.message + " Redirigiendo...");
+                setTimeout(() => router.push("/app"), 2000);
             } else {
                 setError(json.error || "Error al restablecer contraseña.");
             }

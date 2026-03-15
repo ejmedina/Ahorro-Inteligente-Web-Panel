@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAirtableConfig, FIELDS, sanitizeAirtableValue } from '@/lib/server/airtableFieldIds';
 import { updateUser } from '@/lib/server/users';
+import { buildSetSessionCookieHeader } from '@/lib/server/session';
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
@@ -36,7 +37,21 @@ export async function GET(request: NextRequest) {
             verificationToken: null // Lo limpiamos
         });
 
-        return NextResponse.redirect(new URL('/login?message=Cuenta activada con éxito. Ya podés iniciar sesión.', request.url));
+        // Crear sesión para loguear automáticamente
+        const sessionPayload = {
+            airtableRecordId: record.id,
+            fullName: (record.fields[FIELDS.FULL_NAME] as string) || '',
+            email: (record.fields[FIELDS.EMAIL] as string) || '',
+            phone: (record.fields[FIELDS.PHONE] as string) || undefined,
+        };
+
+        const cookieHeader = await buildSetSessionCookieHeader(sessionPayload);
+
+        // Redirigir al panel (dashboard) con la cookie de sesión
+        const response = NextResponse.redirect(new URL('/app', request.url));
+        response.headers.set('Set-Cookie', cookieHeader);
+        
+        return response;
 
     } catch (error) {
         console.error('[auth/verify] Error:', error);

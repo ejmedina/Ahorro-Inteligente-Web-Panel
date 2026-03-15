@@ -49,13 +49,11 @@ export async function POST(request: NextRequest) {
                 email: normalizedEmail,
                 phone: trimmedPhone,
                 passwordHash,
+                verificationToken,
             });
 
-            // Guardar el token de verificación
-            await updateUser(created.recordId, { verificationToken });
-
             // Enviar email de verificación
-            await sendVerificationEmail(normalizedEmail, verificationToken);
+            await sendVerificationEmail(normalizedEmail, verificationToken, trimmedName);
 
             return NextResponse.json(
                 { 
@@ -77,7 +75,7 @@ export async function POST(request: NextRequest) {
                 phone: trimmedPhone
             });
 
-            await sendVerificationEmail(normalizedEmail, verificationToken);
+            await sendVerificationEmail(normalizedEmail, verificationToken, trimmedName);
 
             return NextResponse.json(
                 { 
