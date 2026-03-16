@@ -6,15 +6,17 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { findUserByEmail, createUser, updateUser } from '@/lib/server/users';
 import { sendVerificationEmail } from '@/lib/server/email';
+import { sendpulseService } from '@/lib/server/sendpulse';
 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { name, email, password, phone } = body as {
+        const { name, email, password, phone, whatsappOptIn } = body as {
             name?: string;
             email?: string;
             password?: string;
             phone?: string;
+            whatsappOptIn?: boolean;
         };
 
         // --- Validación básica ---
@@ -39,6 +41,9 @@ export async function POST(request: NextRequest) {
         const trimmedName = name.trim();
         const trimmedPhone = phone?.trim() || undefined;
 
+        // --- Preferencias de WA ---
+        const subscriptionStatus = whatsappOptIn ? 'Pending' : 'Inactive';
+
         // --- Buscar usuario en Airtable ---
         const existingUser = await findUserByEmail(normalizedEmail);
 
@@ -53,10 +58,17 @@ export async function POST(request: NextRequest) {
                 phone: trimmedPhone,
                 passwordHash,
                 verificationToken,
+                subscriptionStatus,
             });
 
             // Enviar email de verificación
             await sendVerificationEmail(normalizedEmail, verificationToken, trimmedName);
+
+            // Enviar WA de verificación si hizo optin
+            if (whatsappOptIn && trimmedPhone) {
+                // No bloqueamos el response de registro
+                sendpulseService.sendWhatsAppTemplate(trimmedPhone).catch(e => console.error('Error enviando WA inicial:', e));
+            }
 
             return NextResponse.json(
                 { 
@@ -75,10 +87,16 @@ export async function POST(request: NextRequest) {
                 passwordHash,
                 verificationToken,
                 fullName: trimmedName,
-                phone: trimmedPhone
+                phone: trimmedPhone,
+                subscriptionStatus,
             });
 
             await sendVerificationEmail(normalizedEmail, verificationToken, trimmedName);
+
+            // Enviar WA de verificación si hizo optin
+            if (whatsappOptIn && trimmedPhone) {
+                sendpulseService.sendWhatsAppTemplate(trimmedPhone).catch(e => console.error('Error enviando WA:', e));
+            }
 
             return NextResponse.json(
                 { 

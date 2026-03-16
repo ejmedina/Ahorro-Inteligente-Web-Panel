@@ -11,6 +11,7 @@ export interface AirtableUser {
     verificationToken?: string;
     recoveryToken?: string;
     recoveryExpiresAt?: string;
+    subscriptionStatus?: string;
 }
 
 interface AirtableRecord {
@@ -58,6 +59,7 @@ function recordToUser(record: AirtableRecord): AirtableUser {
         verificationToken: findValue(FIELDS.VERIFICATION_TOKEN, ['Verification Token', 'Token de Verificación']),
         recoveryToken: findValue(FIELDS.RECOVERY_TOKEN, ['Recovery Token', 'Token de Recuperación']),
         recoveryExpiresAt: findValue(FIELDS.RECOVERY_EXPIRES, ['Recovery Expires At', 'Expiración Recuperación']),
+        subscriptionStatus: findValue(FIELDS.SUBSCRIPTION_STATUS, ['Subscription Status']),
     };
 }
 
@@ -82,12 +84,34 @@ export async function findUserByEmail(email: string): Promise<AirtableUser | nul
     return recordToUser(data.records[0]);
 }
 
+/** Busca un usuario por teléfono normalizado. Retorna null si no existe. */
+export async function findUserByPhone(phone: string): Promise<AirtableUser | null> {
+    const cleanedPhone = phone.replace(/[^0-9]/g, '');
+
+    const { usersTableId } = getAirtableConfig();
+    const formula = encodeURIComponent(`{${FIELDS.PHONE}}='${sanitizeAirtableValue(cleanedPhone)}'`);
+    const url = `${buildAirtableUrl(usersTableId)}?filterByFormula=${formula}&maxRecords=1&returnFieldsByFieldId=1`;
+
+    const res = await fetch(url, { headers: getHeaders(), cache: 'no-store' });
+
+    if (!res.ok) {
+        const body = await res.text();
+        throw new Error(`Airtable error buscando usuario por telefono: ${res.status} ${body}`);
+    }
+
+    const data: AirtableListResponse = await res.json();
+    if (!data.records || data.records.length === 0) return null;
+
+    return recordToUser(data.records[0]);
+}
+
 export interface CreateUserInput {
     fullName: string;
     email: string;
     phone?: string;
     passwordHash: string;
     verificationToken?: string;
+    subscriptionStatus?: string;
 }
 
 /** Crea un nuevo usuario en Airtable. Retorna el registro creado. */
@@ -111,6 +135,10 @@ export async function createUser(input: CreateUserInput): Promise<AirtableUser> 
 
     if (input.verificationToken) {
         fields[FIELDS.VERIFICATION_TOKEN] = input.verificationToken;
+    }
+
+    if (input.subscriptionStatus) {
+        fields[FIELDS.SUBSCRIPTION_STATUS] = input.subscriptionStatus;
     }
 
     const res = await fetch(`${url}?returnFieldsByFieldId=1`, {
@@ -138,6 +166,7 @@ export interface UpdateUserInput {
     verificationToken?: string | null;
     recoveryToken?: string | null;
     recoveryExpiresAt?: string | null;
+    subscriptionStatus?: string;
 }
 
 /** Actualiza campos de un usuario existente en Airtable por su recordId. */
@@ -159,6 +188,7 @@ export async function updateUser(recordId: string, input: UpdateUserInput): Prom
     if (input.verificationToken !== undefined) fields[FIELDS.VERIFICATION_TOKEN] = input.verificationToken!;
     if (input.recoveryToken !== undefined) fields[FIELDS.RECOVERY_TOKEN] = input.recoveryToken!;
     if (input.recoveryExpiresAt !== undefined) fields[FIELDS.RECOVERY_EXPIRES] = input.recoveryExpiresAt!;
+    if (input.subscriptionStatus !== undefined) fields[FIELDS.SUBSCRIPTION_STATUS] = input.subscriptionStatus;
 
     const res = await fetch(`${url}?returnFieldsByFieldId=1`, {
         method: 'PATCH',

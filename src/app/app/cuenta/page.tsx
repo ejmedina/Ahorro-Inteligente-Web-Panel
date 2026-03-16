@@ -8,7 +8,9 @@ import * as z from "zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { User as UserIcon } from "lucide-react";
+import { User as UserIcon, Bell as BellIcon } from "lucide-react";
+
+
 
 const profileSchema = z.object({
     name: z.string().min(2, "El nombre es muy corto"),
@@ -23,6 +25,16 @@ export default function CuentaPage() {
     const [isEditing, setIsEditing] = useState(false);
     const [successMsg, setSuccessMsg] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    
+    // Preferences Form State
+    const [prefLoading, setPrefLoading] = useState(false);
+    const [prefSuccess, setPrefSuccess] = useState("");
+    const [prefError, setPrefError] = useState("");
+    // isWhatsAppActive será true si el usuario tiene Whatsapp como modo (Active o Pending)
+    const [isWhatsAppActive, setIsWhatsAppActive] = useState(false);
+    const [prefPhone, setPrefPhone] = useState("");
+
+    const currentSubStatus = user?.subscriptionStatus || 'Inactive';
 
     const { register, handleSubmit, formState: { errors }, reset } = useForm<ProfileForm>({
         resolver: zodResolver(profileSchema),
@@ -40,6 +52,8 @@ export default function CuentaPage() {
                 email: user.email,
                 phone: user.phone || ""
             });
+            setIsWhatsAppActive(user.subscriptionStatus === 'Active' || user.subscriptionStatus === 'Pending');
+            setPrefPhone(user.phone || "");
         }
     }, [user, reset]);
 
@@ -51,6 +65,46 @@ export default function CuentaPage() {
             setIsLoading(false);
             setIsEditing(false);
         }, 1000);
+    };
+
+    const handleSavePreferences = async () => {
+        setPrefLoading(true);
+        setPrefSuccess("");
+        setPrefError("");
+
+        try {
+            if (isWhatsAppActive && (!prefPhone || prefPhone.length < 5)) {
+                setPrefError("Debes ingresar un número de teléfono válido para WhatsApp.");
+                setPrefLoading(false);
+                return;
+            }
+
+            const res = await fetch("/api/auth/profile/preferences", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    whatsappOptIn: isWhatsAppActive,
+                    phone: prefPhone || undefined
+                })
+            });
+
+            const json = await res.json();
+            if (!res.ok) {
+                setPrefError(json.error || "Error al actualizar preferencias.");
+            } else {
+                setPrefSuccess(
+                    isWhatsAppActive 
+                        ? "Te enviamos un mensaje por WhatsApp para validar el cambio."
+                        : "Tus notificaciones ahora llegarán solo por Email."
+                );
+                // Si teníamos AuthContext.refreshUser, podríamos llamarlo aquí para actualizar:
+                // await refreshUser();
+            }
+        } catch (err) {
+            setPrefError("Error de conexión al actualizar preferencias.");
+        } finally {
+            setPrefLoading(false);
+        }
     };
 
     return (
@@ -115,6 +169,80 @@ export default function CuentaPage() {
                             </div>
                         )}
                     </form>
+                </CardContent>
+            </Card>
+
+            {/* Nueva Card para Preferencias */}
+            <Card>
+                <CardHeader className="flex flex-row justify-between items-center bg-gray-50/50">
+                    <CardTitle className="flex items-center text-lg">
+                        <BellIcon className="w-5 h-5 mr-2 text-gray-500" />
+                        Preferencias de Notificación
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-6">
+                    {prefSuccess && (
+                        <div className="p-3 bg-green-50 text-green-700 rounded-lg text-sm border border-green-100">
+                            {prefSuccess}
+                        </div>
+                    )}
+                    {prefError && (
+                        <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm border border-red-100">
+                            {prefError}
+                        </div>
+                    )}
+
+                    <div className="space-y-4">
+                        <div className="flex items-start bg-gray-50 p-4 rounded-xl border border-gray-100">
+                            <div className="flex-1">
+                                <h4 className="font-medium text-gray-900">Notificaciones por WhatsApp</h4>
+                                <p className="text-sm text-gray-500 mt-1">
+                                    Recibí avisos rápidos de tus gestiones directamente en tu celular.
+                                </p>
+                                {isWhatsAppActive && currentSubStatus === 'Pending' && (
+                                    <div className="mt-2 text-xs font-semibold text-amber-600 bg-amber-50 inline-block px-2 py-1 rounded-md">
+                                        Pendiente de validación. Respondé al mensaje que te enviamos para activar.
+                                    </div>
+                                )}
+                            </div>
+                            <div className="ml-4 flex items-center h-full pt-1">
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                  <input 
+                                    type="checkbox" 
+                                    className="sr-only peer" 
+                                    checked={isWhatsAppActive}
+                                    onChange={(e) => setIsWhatsAppActive(e.target.checked)}
+                                  />
+                                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                        </div>
+
+                        {isWhatsAppActive && (
+                            <div className="px-4 py-3 border-l-2 border-blue-500 bg-blue-50/50 transform transition-all">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Teléfono asociado para WhatsApp
+                                </label>
+                                <input
+                                    type="tel"
+                                    value={prefPhone}
+                                    onChange={(e) => setPrefPhone(e.target.value)}
+                                    placeholder="+54 11 1234 5678"
+                                    className="flex h-10 w-full md:w-1/2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                />
+                            </div>
+                        )}
+
+                        <div className="flex justify-end pt-2">
+                            <Button 
+                                onClick={handleSavePreferences} 
+                                isLoading={prefLoading}
+                                disabled={isWhatsAppActive === (currentSubStatus === 'Active' || currentSubStatus === 'Pending') && prefPhone === (user?.phone || "")}
+                            >
+                                Guardar Preferencias
+                            </Button>
+                        </div>
+                    </div>
                 </CardContent>
             </Card>
 

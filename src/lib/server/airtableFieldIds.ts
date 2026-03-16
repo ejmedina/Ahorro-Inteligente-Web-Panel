@@ -41,6 +41,7 @@ export const FIELDS = {
     VERIFICATION_TOKEN: 'fldBQIIi2ZNLVjTuS',
     RECOVERY_TOKEN: 'fldMxJcu2zz22jYs9',
     RECOVERY_EXPIRES: 'fldLtAeOBlgnl0Vcr',
+    SUBSCRIPTION_STATUS: process.env.AIRTABLE_USERS_FIELD_SUBSCRIPTION_STATUS ?? 'fldMjTJucYIRQmExW',
 } as const;
 
 export const INVOICE_FIELDS = {

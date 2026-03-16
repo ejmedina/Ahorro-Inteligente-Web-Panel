@@ -3,6 +3,7 @@ export interface User {
   name: string;
   email: string;
   phone?: string;
+  subscriptionStatus?: string;
   createdAt: string;
 }
 

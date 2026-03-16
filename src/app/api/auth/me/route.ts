@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 
 import { getSession } from '@/lib/server/session';
+import { findUserByEmail } from '@/lib/server/users';
 
 export async function GET() {
     try {
@@ -12,12 +13,19 @@ export async function GET() {
             return NextResponse.json({ error: 'No autenticado.' }, { status: 401 });
         }
 
+        const dbUser = await findUserByEmail(session.email);
+
+        if (!dbUser) {
+            return NextResponse.json({ error: 'Usuario no encontrado en bd.' }, { status: 401 });
+        }
+
         return NextResponse.json({
             user: {
                 airtableRecordId: session.airtableRecordId,
-                fullName: session.fullName,
-                email: session.email,
-                phone: session.phone,
+                fullName: dbUser.fullName,
+                email: dbUser.email,
+                phone: dbUser.phone,
+                subscriptionStatus: dbUser.subscriptionStatus,
             },
         });
     } catch (err: unknown) {
