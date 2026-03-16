@@ -48,6 +48,7 @@ export const INVOICE_FIELDS = {
     USER: 'fldlKcp1L6rLFvzPM',
     DATE: 'fldV24bvgzasnep7X',
     NEGOTIATIONS: 'fldMDX0AkATbPGSzx',
+    DNI: 'fldtxUUO5YUzYaenl',
 } as const;
 
 export const NEGOTIATION_FIELDS = {

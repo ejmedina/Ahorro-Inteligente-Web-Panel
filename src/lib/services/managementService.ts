@@ -21,12 +21,13 @@ class ManagementService {
         return data.gestion;
     }
 
-    async createGestion(userId: string, file: File, notes?: string): Promise<ManagementRequest> {
+    async createGestion(userId: string, file: File, notes?: string, dni?: string): Promise<ManagementRequest> {
         if (file.size > 10 * 1024 * 1024) throw new Error('El archivo excede el límite de 10MB');
 
         const formData = new FormData();
         formData.append('file', file);
         if (notes) formData.append('notes', notes);
+        if (dni) formData.append('dni', dni);
 
         const res = await fetch('/api/gestiones', {
             method: 'POST',

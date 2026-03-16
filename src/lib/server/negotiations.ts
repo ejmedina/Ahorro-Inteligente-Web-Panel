@@ -2,7 +2,7 @@ import { getAirtableConfig, INVOICE_FIELDS, NEGOTIATION_FIELDS, FIELDS, sanitize
 import { getPaymentMethods } from './stripe';
 import { put } from '@vercel/blob';
 
-export async function createNegotiationWithInvoice(userId: string, file: File, notes?: string) {
+export async function createNegotiationWithInvoice(userId: string, file: File, notes?: string, dni?: string) {
     const config = getAirtableConfig();
 
     // 1. Verificar si el usuario tiene métodos de pago reales
@@ -38,6 +38,16 @@ export async function createNegotiationWithInvoice(userId: string, file: File, n
     }
 
     // 3. Crear el registro en la tabla Invoices
+    const invoiceFields: any = {
+        [INVOICE_FIELDS.DATE]: new Date().toISOString().split('T')[0],
+        [INVOICE_FIELDS.USER]: [userId],
+        [INVOICE_FIELDS.PHOTO]: [{ url: blobUrl }] // Airtable descargará el archivo desde esta URL
+    };
+
+    if (dni) {
+        invoiceFields[INVOICE_FIELDS.DNI] = dni;
+    }
+
     const invoiceResponse = await fetch(`https://api.airtable.com/v0/${config.baseId}/${config.invoicesTableId}`, {
         method: 'POST',
         headers: {
@@ -45,11 +55,7 @@ export async function createNegotiationWithInvoice(userId: string, file: File, n
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            fields: {
-                [INVOICE_FIELDS.DATE]: new Date().toISOString().split('T')[0],
-                [INVOICE_FIELDS.USER]: [userId],
-                [INVOICE_FIELDS.PHOTO]: [{ url: blobUrl }] // Airtable descargará el archivo desde esta URL
-            }
+            fields: invoiceFields
         })
     });
 

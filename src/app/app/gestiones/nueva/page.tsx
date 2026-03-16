@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { managementService } from "@/lib/services/managementService";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { FileUpload } from "@/components/ui/FileUpload";
 import { Card, CardContent } from "@/components/ui/Card";
 import { ArrowLeft } from "lucide-react";
@@ -13,6 +14,7 @@ export default function NuevaGestionPage() {
     const router = useRouter();
     const { user } = useAuth();
     const [file, setFile] = useState<File | null>(null);
+    const [dni, setDni] = useState("");
     const [notes, setNotes] = useState("");
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -23,12 +25,16 @@ export default function NuevaGestionPage() {
             setError("Por favor subí la última factura de tu servicio.");
             return;
         }
+        if (!dni) {
+            setError("Por favor ingresá el DNI del titular.");
+            return;
+        }
         setError("");
         setIsLoading(true);
 
         try {
             if (!user?.airtableRecordId) throw new Error("No user found");
-            const newGestion = await managementService.createGestion(user.airtableRecordId, file, notes);
+            const newGestion = await managementService.createGestion(user.airtableRecordId, file, notes, dni);
             router.push(`/app/gestiones/${newGestion.id}`);
         } catch (err: any) {
             setError(err.message || "Ocurrió un error al crear la gestión.");
@@ -54,6 +60,17 @@ export default function NuevaGestionPage() {
             <Card>
                 <CardContent className="p-6">
                     <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium text-gray-900">DNI del Titular (Requerido)</label>
+                            <Input
+                                type="text"
+                                value={dni}
+                                onChange={(e) => setDni(e.target.value)}
+                                placeholder="Ingresá el DNI del dueño del servicio"
+                                required
+                            />
+                        </div>
+
                         <div className="space-y-2">
                             <label className="block text-sm font-medium text-gray-900">Última factura (Requerido)</label>
                             <p className="text-xs text-gray-500 mb-2">Necesitamos la factura completa para analizar tus consumos y tarifas.</p>

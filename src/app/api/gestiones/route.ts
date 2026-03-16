@@ -12,6 +12,7 @@ export async function POST(req: NextRequest) {
         const formData = await req.formData();
         const file = formData.get('file') as File;
         const notes = formData.get('notes') as string;
+        const dni = formData.get('dni') as string;
 
         if (!file) {
             return NextResponse.json({ error: 'Archivo de factura requerido' }, { status: 400 });
@@ -21,7 +22,8 @@ export async function POST(req: NextRequest) {
         const result = await createNegotiationWithInvoice(
             session.airtableRecordId,
             file,
-            notes
+            notes,
+            dni
         );
 
         return NextResponse.json({
