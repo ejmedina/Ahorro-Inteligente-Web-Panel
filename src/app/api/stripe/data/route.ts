@@ -20,13 +20,29 @@ export async function GET() {
         }
 
         let customerId = user.stripeCustomerId;
+        const stripeInstance = getStripe();
 
-        // Si no tiene Customer ID, lo buscamos/creamos en Stripe y actualizamos Airtable
+        // VALIDACIÓN DE SEGURIDAD: Verificar que el Customer ID pertenezca al email del usuario
+        if (customerId) {
+            try {
+                const customer = await stripeInstance.customers.retrieve(customerId);
+                if ((customer as any).deleted || (customer as any).email !== user.email) {
+                    console.warn(`[api/stripe/data] Customer ID ${customerId} no coincide con email ${user.email}. Buscando uno correcto.`);
+                    customerId = undefined;
+                }
+            } catch (e) {
+                console.error(`[api/stripe/data] Error validando Customer ID ${customerId}:`, e);
+                customerId = undefined;
+            }
+        }
+
+        // Si no tiene Customer ID válido, lo buscamos/creamos en Stripe y actualizamos Airtable
         if (!customerId) {
             const customer = await getStripeCustomer(user.email, user.fullName);
             customerId = customer.id;
             await updateUser(user.recordId, { stripeCustomerId: customerId });
         }
+
 
         const [initialMethods, initialPayments] = await Promise.all([
             getPaymentMethods(customerId),
@@ -59,8 +75,8 @@ export async function GET() {
         await syncNegotiationsStatus(user.recordId, hasMethods, user.email);
 
         // ---- MANEJO DE MEDIO POR DEFECTO ----
-        const stripeInstance = getStripe();
         const customer = await stripeInstance.customers.retrieve(customerId);
+
         let defaultPmId = (customer as any).invoice_settings?.default_payment_method;
 
         return NextResponse.json({
