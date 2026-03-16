@@ -73,7 +73,7 @@ export async function sendRecoveryEmail(email: string, token: string, name: stri
         : process.env.VERCEL_URL 
             ? `https://${process.env.VERCEL_URL}` 
             : 'http://localhost:3000';
-    const recoveryUrl = `${baseUrl}/reset-password?token=${token}`;
+    const recoveryUrl = `${baseUrl}/recuperar-clave?token=${token}`;
 
     const html = `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
