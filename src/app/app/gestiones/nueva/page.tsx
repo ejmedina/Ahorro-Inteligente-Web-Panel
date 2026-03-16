@@ -64,9 +64,14 @@ export default function NuevaGestionPage() {
                             <label className="block text-sm font-medium text-gray-900">DNI del Titular (Requerido)</label>
                             <Input
                                 type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
                                 value={dni}
-                                onChange={(e) => setDni(e.target.value)}
-                                placeholder="Ingresá el DNI del dueño del servicio"
+                                onChange={(e) => {
+                                    const val = e.target.value.replace(/\D/g, "");
+                                    setDni(val);
+                                }}
+                                placeholder="Ingresá los números del DNI"
                                 required
                             />
                         </div>

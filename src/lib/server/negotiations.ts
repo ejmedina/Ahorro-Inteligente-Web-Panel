@@ -1,5 +1,6 @@
 import { getAirtableConfig, INVOICE_FIELDS, NEGOTIATION_FIELDS, FIELDS, sanitizeAirtableValue } from './airtableFieldIds';
-import { getPaymentMethods } from './stripe';
+import { getPaymentMethods, getStripeCustomer } from './stripe';
+import { updateUser } from './users';
 import { put } from '@vercel/blob';
 
 export async function createNegotiationWithInvoice(userId: string, file: File, notes?: string, dni?: string) {
@@ -11,12 +12,27 @@ export async function createNegotiationWithInvoice(userId: string, file: File, n
         headers: { 'Authorization': `Bearer ${config.apiKey}` }
     });
     const userData = await userRes.json();
-    const customerId = userData.fields[FIELDS.STRIPE_CUSTOMER_ID];
+    let customerId = userData.fields[FIELDS.STRIPE_CUSTOMER_ID];
+    const email = userData.fields[FIELDS.EMAIL];
+    const fullName = userData.fields[FIELDS.FULL_NAME];
     
     let hasPaymentMethod = false;
     if (customerId) {
         const methods = await getPaymentMethods(customerId);
         hasPaymentMethod = methods.length > 0;
+    }
+
+    // Autocorrección: Si no tiene métodos o el customerId es nulo, buscamos uno mejor en Stripe
+    if (!hasPaymentMethod && email) {
+        const betterCustomer = await getStripeCustomer(email, fullName);
+        if (betterCustomer.id !== customerId) {
+            console.log(`[negotiations] Auto-corrigiendo customer ID de ${customerId} a ${betterCustomer.id} durante creación`);
+            customerId = betterCustomer.id;
+            await updateUser(userId, { stripeCustomerId: customerId });
+            
+            const methods = await getPaymentMethods(customerId);
+            hasPaymentMethod = methods.length > 0;
+        }
     }
     
     const initialStatus = hasPaymentMethod ? 'Pending' : 'PendingPayment';
