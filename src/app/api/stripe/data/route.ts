@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
+
 import { getSession } from '@/lib/server/session';
 import { findUserByEmail, updateUser } from '@/lib/server/users';
 import { getStripeCustomer, getPaymentMethods, getPaymentHistory, getStripe } from '@/lib/server/stripe';

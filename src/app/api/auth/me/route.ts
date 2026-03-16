@@ -1,4 +1,7 @@
 import { NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
+
 import { getSession } from '@/lib/server/session';
 
 export async function GET() {

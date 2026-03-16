@@ -3,7 +3,7 @@ import { stripeAdapter } from '../adapters/stripeAdapter';
 
 class PaymentService {
     async getPaymentMethods(_userId: string): Promise<PaymentMethod[]> {
-        const res = await fetch('/api/stripe/data');
+        const res = await fetch('/api/stripe/data', { cache: 'no-store' });
         if (!res.ok) throw new Error('Error al obtener medios de pago');
         const data = await res.json();
         return data.methods.map((m: any) => ({
@@ -16,7 +16,7 @@ class PaymentService {
     }
 
     async getPayments(_userId: string): Promise<Payment[]> {
-        const res = await fetch('/api/stripe/data');
+        const res = await fetch('/api/stripe/data', { cache: 'no-store' });
         if (!res.ok) throw new Error('Error al obtener historial de pagos');
         const data = await res.json();
         return data.payments.map((p: any) => ({

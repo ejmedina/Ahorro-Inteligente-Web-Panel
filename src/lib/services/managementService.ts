@@ -3,7 +3,7 @@ import { airtableAdapter } from '../adapters/airtableAdapter';
 
 class ManagementService {
     async getUserGestiones(_userId: string): Promise<ManagementRequest[]> {
-        const res = await fetch('/api/gestiones');
+        const res = await fetch('/api/gestiones', { cache: 'no-store' });
         if (!res.ok) throw new Error('Error al obtener las gestiones');
         const data = await res.json();
 
@@ -12,7 +12,7 @@ class ManagementService {
     }
 
     async getGestion(id: string): Promise<ManagementRequest | undefined> {
-        const res = await fetch(`/api/gestiones/${id}`);
+        const res = await fetch(`/api/gestiones/${id}`, { cache: 'no-store' });
         if (!res.ok) {
             if (res.status === 404) return undefined;
             throw new Error('Error al obtener el detalle de la gestión');
