@@ -29,7 +29,7 @@ export default function RegisterPage() {
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
-    const { register, handleSubmit, watch, formState: { errors } } = useForm<RegisterForm>({
+    const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<RegisterForm>({
         resolver: zodResolver(registerSchema),
         defaultValues: {
             whatsappOptIn: false,
@@ -126,11 +126,8 @@ export default function RegisterPage() {
                                 <div className="flex h-5 items-center">
                                     <input
                                         type="radio"
-                                        value="false"
-                                        checked={!isWhatsAppSelected}
-                                        {...register("whatsappOptIn", { 
-                                            setValueAs: v => v === "true" 
-                                        })}
+                                        checked={isWhatsAppSelected === false}
+                                        onChange={() => setValue("whatsappOptIn", false, { shouldValidate: true })}
                                         className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
                                     />
                                 </div>
@@ -144,11 +141,8 @@ export default function RegisterPage() {
                                 <div className="flex h-5 items-center">
                                     <input
                                         type="radio"
-                                        value="true"
                                         checked={isWhatsAppSelected === true}
-                                        {...register("whatsappOptIn", { 
-                                            setValueAs: v => v === "true" 
-                                        })}
+                                        onChange={() => setValue("whatsappOptIn", true, { shouldValidate: true })}
                                         className="h-4 w-4 border-gray-300 text-green-600 focus:ring-green-600 cursor-pointer"
                                     />
                                 </div>

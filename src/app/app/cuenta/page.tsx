@@ -32,7 +32,6 @@ export default function CuentaPage() {
     const [prefError, setPrefError] = useState("");
     // isWhatsAppActive será true si el usuario tiene Whatsapp como modo (Active o Pending)
     const [isWhatsAppActive, setIsWhatsAppActive] = useState(false);
-    const [prefPhone, setPrefPhone] = useState("");
 
     const currentSubStatus = user?.subscriptionStatus || 'Inactive';
 
@@ -53,7 +52,6 @@ export default function CuentaPage() {
                 phone: user.phone || ""
             });
             setIsWhatsAppActive(user.subscriptionStatus === 'Active' || user.subscriptionStatus === 'Pending');
-            setPrefPhone(user.phone || "");
         }
     }, [user, reset]);
 
@@ -73,8 +71,8 @@ export default function CuentaPage() {
         setPrefError("");
 
         try {
-            if (isWhatsAppActive && (!prefPhone || prefPhone.length < 5)) {
-                setPrefError("Debes ingresar un número de teléfono válido para WhatsApp.");
+            if (isWhatsAppActive && !user?.phone) {
+                setPrefError("Para activar WhatsApp necesitas tener un teléfono registrado en tus Datos Personales arriba.");
                 setPrefLoading(false);
                 return;
             }
@@ -84,7 +82,7 @@ export default function CuentaPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     whatsappOptIn: isWhatsAppActive,
-                    phone: prefPhone || undefined
+                    phone: user?.phone || undefined
                 })
             });
 
@@ -197,7 +195,8 @@ export default function CuentaPage() {
                             <div className="flex-1">
                                 <h4 className="font-medium text-gray-900">Notificaciones por WhatsApp</h4>
                                 <p className="text-sm text-gray-500 mt-1">
-                                    Recibí avisos rápidos de tus gestiones directamente en tu celular.
+                                    Recibí avisos rápidos de tus gestiones directamente en tu celular. <br/>
+                                    <strong>Nota:</strong> Si desmarcás esta opción, las notificaciones te llegarán únicamente por correo electrónico.
                                 </p>
                                 {isWhatsAppActive && currentSubStatus === 'Pending' && (
                                     <div className="mt-2 text-xs font-semibold text-amber-600 bg-amber-50 inline-block px-2 py-1 rounded-md">
@@ -218,26 +217,11 @@ export default function CuentaPage() {
                             </div>
                         </div>
 
-                        {isWhatsAppActive && (
-                            <div className="px-4 py-3 border-l-2 border-blue-500 bg-blue-50/50 transform transition-all">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Teléfono asociado para WhatsApp
-                                </label>
-                                <input
-                                    type="tel"
-                                    value={prefPhone}
-                                    onChange={(e) => setPrefPhone(e.target.value)}
-                                    placeholder="+54 11 1234 5678"
-                                    className="flex h-10 w-full md:w-1/2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
-                                />
-                            </div>
-                        )}
-
                         <div className="flex justify-end pt-2">
                             <Button 
                                 onClick={handleSavePreferences} 
                                 isLoading={prefLoading}
-                                disabled={isWhatsAppActive === (currentSubStatus === 'Active' || currentSubStatus === 'Pending') && prefPhone === (user?.phone || "")}
+                                disabled={isWhatsAppActive === (currentSubStatus === 'Active' || currentSubStatus === 'Pending')}
                             >
                                 Guardar Preferencias
                             </Button>
