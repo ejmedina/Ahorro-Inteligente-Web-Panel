@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { paymentService } from "@/lib/services/paymentService";
 import { PaymentMethod } from "@/lib/types";
@@ -15,6 +16,19 @@ export default function MediosDePagoPage() {
     const [methods, setMethods] = useState<PaymentMethod[]>([]);
     const [loading, setLoading] = useState(true);
     const [redirecting, setRedirecting] = useState(false);
+    
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
+    const isSuccess = searchParams?.get("success") === "true";
+    const isCanceled = searchParams?.get("canceled") === "true";
+
+    useEffect(() => {
+        if (isSuccess || isCanceled) {
+            // Remove the query param from the URL cleanly
+            router.replace(pathname || "/app/medios-de-pago");
+        }
+    }, [isSuccess, isCanceled, router, pathname]);
 
     const loadMethods = React.useCallback(() => {
         if (user?.airtableRecordId) {
@@ -33,8 +47,11 @@ export default function MediosDePagoPage() {
         if (!user?.airtableRecordId) return;
         setRedirecting(true);
         try {
-            const url = await paymentService.getSetupUrl(user.airtableRecordId);
-            // Mock redirection
+            const url = await paymentService.getSetupUrl(
+                user.airtableRecordId, 
+                undefined, 
+                window.location.href.split('?')[0] // Remove existing query params
+            );
             window.location.href = url;
         } catch (err) {
             alert("Error al obtener URL de validación");
@@ -91,6 +108,18 @@ export default function MediosDePagoPage() {
                     Agregar nuevo
                 </Button>
             </div>
+
+            {isSuccess && (
+                <div className="p-4 bg-green-50 text-green-800 rounded-xl border border-green-200">
+                    ✅ ¡La tarjeta se guardó correctamente!
+                </div>
+            )}
+            
+            {isCanceled && (
+                <div className="p-4 bg-yellow-50 text-yellow-800 rounded-xl border border-yellow-200">
+                    ⚠️ Cancelaste el proceso de agregar tarjeta.
+                </div>
+            )}
 
             {methods.length === 0 ? (
                 <EmptyState

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { managementService } from "@/lib/services/managementService";
 import { paymentService } from "@/lib/services/paymentService";
@@ -22,6 +22,17 @@ export default function GestionDetailPage() {
     const [payments, setPayments] = useState<Payment[]>([]);
     const [loading, setLoading] = useState(true);
     const [canceling, setCanceling] = useState(false);
+
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
+    const isSuccess = searchParams?.get("success") === "true";
+    const isCanceled = searchParams?.get("canceled") === "true";
+
+    useEffect(() => {
+        if (isSuccess || isCanceled) {
+            router.replace(pathname || `/app/gestiones/${id}`);
+        }
+    }, [isSuccess, isCanceled, router, pathname, id]);
 
     useEffect(() => {
         if (user?.airtableRecordId && id) {
@@ -97,6 +108,18 @@ export default function GestionDetailPage() {
                     </div>
                 </div>
             </div>
+
+            {isSuccess && (
+                <div className="p-4 bg-green-50 text-green-800 rounded-xl border border-green-200">
+                    ✅ ¡La tarjeta se guardó correctamente!
+                </div>
+            )}
+            
+            {isCanceled && (
+                <div className="p-4 bg-yellow-50 text-yellow-800 rounded-xl border border-yellow-200">
+                    ⚠️ Cancelaste el proceso de agregar tarjeta.
+                </div>
+            )}
 
             <div className="grid gap-6">
                 {/* Invoice details */}
@@ -233,7 +256,7 @@ export default function GestionDetailPage() {
                         <Button 
                             onClick={async () => {
                                 try {
-                                    const url = await paymentService.getSetupUrl(user!.airtableRecordId, gestion.id);
+                                    const url = await paymentService.getSetupUrl(user!.airtableRecordId, gestion.id, window.location.href.split('?')[0]);
                                     window.location.href = url;
                                 } catch (err: any) {
                                     alert(err.message || "Error al obtener URL de pago");

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/server/session';
 import { findUserByEmail, updateUser } from '@/lib/server/users';
-import { getStripeCustomer } from '@/lib/server/stripe';
+import { getStripeCustomer, getStripe } from '@/lib/server/stripe';
 import { getAirtableConfig, NEGOTIATION_FIELDS, sanitizeAirtableValue } from '@/lib/server/airtableFieldIds';
 
 export async function POST(req: NextRequest) {
@@ -86,32 +86,40 @@ export async function POST(req: NextRequest) {
         const newSub = await subRes.json();
         const subscriptionId = newSub.id;
 
-        // 2. Pegarle a la API de Ahorro Inteligente para obtener la URL de Setup
-        console.log(`[stripe/setup] Fetching setup URL for subscription ${subscriptionId}...`);
-        const setupRes = await fetch('https://ahorrointeligente.com.ar/api/v1/stripe/setups', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                subscriptionId: subscriptionId,
-                userId: user.recordId
-            })
+        // 2. Crear Checkout Session de Stripe directamente
+        console.log(`[stripe/setup] Creating Stripe setup session for subscription ${subscriptionId}...`);
+        
+        const stripe = getStripe();
+        
+        let successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/app/medios-de-pago?success=true&session_id={CHECKOUT_SESSION_ID}`;
+        let cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL}/app/medios-de-pago?canceled=true`;
+        
+        const { returnUrl } = body;
+        if (returnUrl) {
+            const separator = returnUrl.includes('?') ? '&' : '?';
+            successUrl = `${returnUrl}${separator}success=true&session_id={CHECKOUT_SESSION_ID}`;
+            cancelUrl = `${returnUrl}${separator}canceled=true`;
+        }
+
+        const sessionStripe = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            mode: 'setup',
+            success_url: successUrl,
+            cancel_url: cancelUrl,
+            locale: 'es',
+            customer: customerId,
+            client_reference_id: subscriptionId,
+            metadata: {
+                airtableSubscriptionId: subscriptionId,
+                airtableUserId: user.recordId
+            }
         });
 
-        if (!setupRes.ok) {
-            const err = await setupRes.text();
-            console.error('[stripe/setup] External API Setup Error:', err);
-            throw new Error(`Error en API de setups: ${err}`);
+        if (!sessionStripe.url) {
+            throw new Error('Stripe no devolvió una URL válida para el Checkout.');
         }
 
-        const setupData = await setupRes.json();
-        const url = setupData.shortUrl || setupData.url;
-
-        if (!url) {
-            console.error('[stripe/setup] No URL returned from setup API', setupData);
-            throw new Error('No se recibió una URL válida de la API de pagos.');
-        }
-
-        return NextResponse.json({ success: true, url });
+        return NextResponse.json({ success: true, url: sessionStripe.url });
 
     } catch (error: any) {
         console.error('[api/stripe/setup] Error:', error);

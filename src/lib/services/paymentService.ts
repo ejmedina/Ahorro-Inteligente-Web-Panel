@@ -28,11 +28,11 @@ class PaymentService {
         }));
     }
 
-    async getSetupUrl(_userId: string, negotiationId?: string): Promise<string> {
+    async getSetupUrl(_userId: string, negotiationId?: string, returnUrl?: string): Promise<string> {
         const res = await fetch('/api/stripe/setup', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ negotiationId })
+            body: JSON.stringify({ negotiationId, returnUrl })
         });
         if (!res.ok) {
             const err = await res.json();
