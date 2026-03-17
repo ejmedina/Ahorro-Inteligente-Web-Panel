@@ -47,20 +47,20 @@ export async function GET(req: NextRequest) {
         }
 
         const userId = session.airtableRecordId;
-        
+
         // 1. Obtener el customerId de Airtable para validar en Stripe
         const config = require('@/lib/server/airtableFieldIds').getAirtableConfig();
         const FIELDS = require('@/lib/server/airtableFieldIds').FIELDS;
         const userRes = await fetch(`https://api.airtable.com/v0/${config.baseId}/${config.usersTableId}/${userId}`, {
             headers: { 'Authorization': `Bearer ${config.apiKey}` }
         });
-        
+
         if (userRes.ok) {
             const userData = await userRes.json();
             let customerId = userData.fields[FIELDS.STRIPE_CUSTOMER_ID];
             const fullName = userData.fields[FIELDS.FULL_NAME];
             const email = userData.fields[FIELDS.EMAIL];
-            
+
             const { getPaymentMethods, getStripeCustomer } = require('@/lib/server/stripe');
             const { syncNegotiationsStatus } = require('@/lib/server/syncPayloads');
             const { updateUser } = require('@/lib/server/users');

@@ -31,6 +31,11 @@ export default function GestionesPage() {
             ]).then(([gestionesData, methodsData]) => {
                 setGestiones(gestionesData);
                 setHasPaymentMethods(methodsData.length > 0);
+            }).catch((error) => {
+                console.error("Error al cargar las gestiones:", error);
+                setGestiones([]);
+                setHasPaymentMethods(false);
+            }).finally(() => {
                 setLoading(false);
             });
         }
