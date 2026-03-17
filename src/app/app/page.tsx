@@ -11,7 +11,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { FileText, Clock, Plus, ArrowRight } from "lucide-react";
+import { FileText, Clock, Plus, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 export default function DashboardPage() {
@@ -19,6 +19,18 @@ export default function DashboardPage() {
     const [gestiones, setGestiones] = useState<ManagementRequest[]>([]);
     const [pagos, setPagos] = useState<Payment[]>([]);
     const [loading, setLoading] = useState(true);
+    const [justVerified, setJustVerified] = useState(false);
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get("verified") === "true") {
+                setJustVerified(true);
+                // Limpiar la URL para que no siga apareciendo al refrescar
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+    }, []);
 
     useEffect(() => {
         if (user?.airtableRecordId) {
@@ -28,6 +40,11 @@ export default function DashboardPage() {
             ]).then(([g, p]) => {
                 setGestiones(g);
                 setPagos(p);
+            }).catch((err) => {
+                console.error("Error al cargar datos del dashboard:", err);
+                setGestiones([]);
+                setPagos([]);
+            }).finally(() => {
                 setLoading(false);
             });
         }
@@ -50,6 +67,16 @@ export default function DashboardPage() {
 
     return (
         <div className="space-y-6">
+            {justVerified && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start sm:items-center space-x-3 shadow-sm">
+                    <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 sm:mt-0 shrink-0" />
+                    <div>
+                        <h3 className="text-sm font-medium text-green-800">¡Tu email fue verificado correctamente!</h3>
+                        <p className="text-sm text-green-700 mt-1">Ya podés empezar a usar tu panel de Ahorro Inteligente.</p>
+                    </div>
+                </div>
+            )}
+
             <div>
                 <h1 className="text-2xl font-bold tracking-tight text-gray-900">Hola, {user?.fullName?.split(' ')[0]} 👋</h1>
                 <p className="text-gray-500">Acá tenés un resumen de tu actividad.</p>

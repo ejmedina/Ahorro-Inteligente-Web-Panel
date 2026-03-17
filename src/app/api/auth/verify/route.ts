@@ -47,8 +47,8 @@ export async function GET(request: NextRequest) {
 
         const cookieHeader = await buildSetSessionCookieHeader(sessionPayload);
 
-        // Redirigir al panel (dashboard) con la cookie de sesión
-        const response = NextResponse.redirect(new URL('/app', request.url));
+        // Redirigir al panel (dashboard) con la cookie de sesión y parametro de éxito
+        const response = NextResponse.redirect(new URL('/app?verified=true', request.url));
         response.headers.set('Set-Cookie', cookieHeader);
         
         return response;
