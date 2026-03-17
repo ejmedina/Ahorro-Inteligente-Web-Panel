@@ -1,7 +1,7 @@
 export function getSendpulseConfig() {
-    const id = process.env.SENDPULSE_ID;
-    const secret = process.env.SENDPULSE_SECRET;
-    const botId = process.env.SENDPULSE_WHATSAPP_BOT_ID;
+    const id = process.env.SENDPULSE_CLIENT_ID;
+    const secret = process.env.SENDPULSE_CLIENT_SECRET;
+    const botId = process.env.SENDPULSE_BOT_ID;
 
     return {
         id,
@@ -60,7 +60,7 @@ class SendpulseService {
     async sendWhatsAppTemplate(phone: string, templateName: string = 'activar_notificaciones', language: string = 'es'): Promise<boolean> {
         const config = getSendpulseConfig();
         if (!config.botId) {
-            console.warn('SENDPULSE_WHATSAPP_BOT_ID missing. Simulando envío a ' + phone);
+            console.warn('SENDPULSE_BOT_ID missing. Simulando envío a ' + phone);
             return true;
         }
 

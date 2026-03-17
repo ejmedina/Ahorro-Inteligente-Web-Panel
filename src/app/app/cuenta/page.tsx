@@ -21,7 +21,7 @@ const profileSchema = z.object({
 type ProfileForm = z.infer<typeof profileSchema>;
 
 export default function CuentaPage() {
-    const { user, logout } = useAuth();
+    const { user, logout, refreshUser } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [successMsg, setSuccessMsg] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -95,8 +95,8 @@ export default function CuentaPage() {
                         ? "Te enviamos un mensaje por WhatsApp para validar el cambio."
                         : "Tus notificaciones ahora llegarán solo por Email."
                 );
-                // Si teníamos AuthContext.refreshUser, podríamos llamarlo aquí para actualizar:
-                // await refreshUser();
+                // Refrescamos el usuario en el contexto para que currentSubStatus se actualice
+                await refreshUser();
             }
         } catch (err) {
             setPrefError("Error de conexión al actualizar preferencias.");
