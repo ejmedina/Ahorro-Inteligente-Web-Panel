@@ -53,7 +53,7 @@ function LoginContent() {
             }
             
             await refreshUser();
-            router.push("/app/gestiones");
+            router.push("/app");
         } catch {
             setError("Error de conexión. Intentá de nuevo.");
         } finally {

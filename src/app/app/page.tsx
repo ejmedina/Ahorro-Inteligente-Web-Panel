@@ -15,7 +15,7 @@ import { FileText, Clock, Plus, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 export default function DashboardPage() {
-    const { user } = useAuth();
+    const { user, isLoading: authLoading } = useAuth();
     const [gestiones, setGestiones] = useState<ManagementRequest[]>([]);
     const [pagos, setPagos] = useState<Payment[]>([]);
     const [loading, setLoading] = useState(true);
@@ -33,6 +33,11 @@ export default function DashboardPage() {
     }, []);
 
     useEffect(() => {
+        if (!authLoading && !user?.airtableRecordId) {
+            setLoading(false);
+            return;
+        }
+
         if (user?.airtableRecordId) {
             Promise.all([
                 managementService.getUserGestiones(user.airtableRecordId),
@@ -48,7 +53,7 @@ export default function DashboardPage() {
                 setLoading(false);
             });
         }
-    }, [user?.airtableRecordId]);
+    }, [user?.airtableRecordId, authLoading]);
 
     if (loading) {
         return (

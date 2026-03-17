@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (isAppRoute && !user) {
                 router.replace("/login");
             } else if (isAuthRoute && user) {
-                router.replace("/app/gestiones");
+                router.replace("/app");
             }
         }
     }, [user, isLoading, pathname, router]);

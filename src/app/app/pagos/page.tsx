@@ -15,19 +15,31 @@ import { es } from "date-fns/locale";
 import { Clock, ChevronRight } from "lucide-react";
 
 export default function PagosPage() {
-    const { user } = useAuth();
+    const { user, isLoading: authLoading } = useAuth();
     const router = useRouter();
     const [pagos, setPagos] = useState<Payment[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (user?.airtableRecordId) {
-            paymentService.getPayments(user.airtableRecordId).then(data => {
-                setPagos(data);
-                setLoading(false);
-            });
+        if (!authLoading && !user?.airtableRecordId) {
+            setLoading(false);
+            return;
         }
-    }, [user?.airtableRecordId]);
+
+        if (user?.airtableRecordId) {
+            paymentService.getPayments(user.airtableRecordId)
+                .then(data => {
+                    setPagos(data || []);
+                })
+                .catch(err => {
+                    console.error("Error al cargar pagos:", err);
+                    setPagos([]);
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
+        }
+    }, [user?.airtableRecordId, authLoading]);
 
     if (loading) {
         return (

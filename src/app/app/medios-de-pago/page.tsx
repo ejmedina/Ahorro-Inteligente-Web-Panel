@@ -12,7 +12,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { CreditCard, Plus, Star, Trash2 } from "lucide-react";
 
 export default function MediosDePagoPage() {
-    const { user } = useAuth();
+    const { user, isLoading: authLoading } = useAuth();
     const [methods, setMethods] = useState<PaymentMethod[]>([]);
     const [loading, setLoading] = useState(true);
     const [redirecting, setRedirecting] = useState(false);
@@ -31,13 +31,25 @@ export default function MediosDePagoPage() {
     }, [isSuccess, isCanceled, router, pathname]);
 
     const loadMethods = React.useCallback(() => {
-        if (user?.airtableRecordId) {
-            paymentService.getPaymentMethods(user.airtableRecordId).then(data => {
-                setMethods(data);
-                setLoading(false);
-            });
+        if (!authLoading && !user?.airtableRecordId) {
+            setLoading(false);
+            return;
         }
-    }, [user?.airtableRecordId]);
+
+        if (user?.airtableRecordId) {
+            paymentService.getPaymentMethods(user.airtableRecordId)
+                .then(data => {
+                    setMethods(data || []);
+                })
+                .catch(err => {
+                    console.error("Error al cargar medios de pago:", err);
+                    setMethods([]);
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
+        }
+    }, [user?.airtableRecordId, authLoading]);
 
     useEffect(() => {
         loadMethods();
