@@ -101,6 +101,9 @@ export async function POST(req: NextRequest) {
             cancelUrl = `${returnUrl}${separator}canceled=true`;
         }
 
+        // TODO: Evaluar si a futuro es conveniente prevenir que el usuario cargue duplicados.
+        // Actualmente Stripe 'setup' mode permite cargar la misma tarjeta varias veces 
+        // y genera nuevos PaymentMethod IDs para cada una.
         const sessionStripe = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             mode: 'setup',
