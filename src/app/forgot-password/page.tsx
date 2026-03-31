@@ -18,8 +18,10 @@ export default function ForgotPasswordPage() {
     const [msg, setMsg] = useState("");
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [showResend, setShowResend] = useState(false);
+    const [isResending, setIsResending] = useState(false);
 
-    const { register, handleSubmit, formState: { errors } } = useForm<Form>({
+    const { register, handleSubmit, getValues, formState: { errors } } = useForm<Form>({
         resolver: zodResolver(schema)
     });
 
@@ -37,13 +39,44 @@ export default function ForgotPasswordPage() {
             const json = await res.json();
             if (res.ok) {
                 setMsg(json.message);
+                setShowResend(false);
             } else {
                 setError(json.error || "Algo salió mal.");
+                if (res.status === 403 && json.error?.includes("no está verificada")) {
+                    setShowResend(true);
+                } else {
+                    setShowResend(false);
+                }
             }
         } catch {
             setError("Error de conexión.");
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleResend = async () => {
+        setIsResending(true);
+        setError("");
+        setMsg("");
+        try {
+            const email = getValues("email");
+            const res = await fetch("/api/auth/resend-verification", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email }),
+            });
+            const json = await res.json();
+            if (res.ok) {
+                setMsg(json.message);
+                setShowResend(false);
+            } else {
+                setError(json.error || "Error al reenviar el correo.");
+            }
+        } catch {
+            setError("Error de conexión al reenviar el correo.");
+        } finally {
+            setIsResending(false);
         }
     };
 
@@ -75,8 +108,20 @@ export default function ForgotPasswordPage() {
                     )}
 
                     {error && (
-                        <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-100">
-                            {error}
+                        <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-100 flex flex-col gap-2">
+                            <span>{error}</span>
+                            {showResend && (
+                                <Button 
+                                    type="button" 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={handleResend}
+                                    isLoading={isResending}
+                                    className="w-full mt-1 border-red-200 text-red-700 hover:bg-red-100"
+                                >
+                                    Reenviar correo de validación
+                                </Button>
+                            )}
                         </div>
                     )}
 

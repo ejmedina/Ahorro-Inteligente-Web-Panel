@@ -39,10 +39,18 @@ export async function POST(request: NextRequest) {
             passwordHash,
             recoveryToken: null,
             recoveryExpiresAt: null,
-            authStatus: 'active' // Por si no estaba activada, esto la activa
         });
 
-        // Crear sesión para loguear automáticamente
+        const authStatus = record.fields[FIELDS.AUTH_STATUS] as string;
+
+        if (authStatus === 'pending') {
+            return NextResponse.json({
+                success: true,
+                message: 'Contraseña actualizada con éxito. Por favor verificá tu cuenta desde el email que te enviamos para poder Iniciar Sesión.'
+            });
+        }
+
+        // Crear sesión para loguear automáticamente (solo si está verificado)
         const sessionPayload = {
             airtableRecordId: record.id,
             fullName: (record.fields[FIELDS.FULL_NAME] as string) || '',

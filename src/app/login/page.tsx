@@ -25,8 +25,10 @@ function LoginContent() {
     const [msg, setMsg] = useState(searchParams.get("message") || "");
     const [error, setError] = useState(searchParams.get("error") || "");
     const [isLoading, setIsLoading] = useState(false);
+    const [showResend, setShowResend] = useState(false);
+    const [isResending, setIsResending] = useState(false);
 
-    const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
+    const { register, handleSubmit, getValues, formState: { errors } } = useForm<LoginForm>({
         resolver: zodResolver(loginSchema)
     });
 
@@ -45,6 +47,11 @@ function LoginContent() {
 
             if (!res.ok) {
                 setError(json.error || "Credenciales inválidas.");
+                if (res.status === 403 && json.error?.includes("no está verificada")) {
+                    setShowResend(true);
+                } else {
+                    setShowResend(false);
+                }
                 return;
             }
 
@@ -58,6 +65,31 @@ function LoginContent() {
             setError("Error de conexión. Intentá de nuevo.");
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleResend = async () => {
+        setIsResending(true);
+        setError("");
+        setMsg("");
+        try {
+            const email = getValues("email");
+            const res = await fetch("/api/auth/resend-verification", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email }),
+            });
+            const json = await res.json();
+            if (res.ok) {
+                setMsg(json.message);
+                setShowResend(false);
+            } else {
+                setError(json.error || "Error al reenviar el correo.");
+            }
+        } catch {
+            setError("Error de conexión al reenviar el correo.");
+        } finally {
+            setIsResending(false);
         }
     };
 
@@ -101,8 +133,20 @@ function LoginContent() {
                     )}
 
                     {error && (
-                        <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-100">
-                            {error}
+                        <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-100 flex flex-col gap-2">
+                            <span>{error}</span>
+                            {showResend && (
+                                <Button 
+                                    type="button" 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={handleResend}
+                                    isLoading={isResending}
+                                    className="w-full mt-1 border-red-200 text-red-700 hover:bg-red-100"
+                                >
+                                    Reenviar correo de verificación
+                                </Button>
+                            )}
                         </div>
                     )}
 

@@ -11,6 +11,13 @@ export async function POST(request: NextRequest) {
         const user = await findUserByEmail(email);
 
         if (user) {
+            if (user.authStatus === 'pending') {
+                return NextResponse.json(
+                    { error: 'Tu cuenta no está verificada. Por favor revisá tu correo de activación original, o ingresá al inicio de sesión para reenviarlo.' },
+                    { status: 403 }
+                );
+            }
+
             const recoveryToken = crypto.randomBytes(32).toString('hex');
             const expires = new Date();
             expires.setHours(expires.getHours() + 1); // 1 hora de validez
