@@ -49,7 +49,24 @@ export async function POST(req: NextRequest) {
         }
 
         let customerId = user.stripeCustomerId;
+        
+        // Verificación de integridad: Si tiene customerId, validamos en Stripe que el email coincida para evitar fugas.
+        if (customerId) {
+            try {
+                const stripe = getStripe();
+                const customer = await stripe.customers.retrieve(customerId) as any;
+                if (!customer || customer.deleted || customer.email?.toLowerCase() !== user.email.toLowerCase()) {
+                    console.warn(`[stripe/setup] Customer ID mismatch or deleted for user ${user.recordId}. Expected ${user.email}, found ${customer?.email}. Resetting...`);
+                    customerId = undefined; // Forzar regeneración
+                }
+            } catch (e) {
+                console.error(`[stripe/setup] Error retrieving customer ${customerId}:`, e);
+                customerId = undefined;
+            }
+        }
+
         if (!customerId) {
+            console.log(`[stripe/setup] Creating/Finding Stripe customer for user ${user.email}...`);
             const customer = await getStripeCustomer(user.email, user.fullName);
             customerId = customer.id;
             await updateUser(user.recordId, { stripeCustomerId: customerId });

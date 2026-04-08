@@ -18,15 +18,26 @@ export function getStripe() {
 }
 
 export async function getStripeCustomer(email: string, fullName: string) {
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+        console.error('[stripe] Invalid email provided for customer lookup:', email);
+        throw new Error('Email de usuario inválido para procesar pagos.');
+    }
+
     const stripe = getStripe();
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // 1. Intentar buscar por email exacto
     const customers = await stripe.customers.list({
-        email: email,
-        limit: 10,
+        email: normalizedEmail,
+        limit: 5,
     });
 
-    if (customers.data.length > 0) {
-        // Si hay varios, buscamos el que tenga medios de pago
-        for (const customer of customers.data) {
+    // 2. Filtrar rigurosamente los resultados (por si Stripe devolviera de más o ignorara el filtro)
+    const matchingCustomers = customers.data.filter(c => c.email?.toLowerCase() === normalizedEmail);
+
+    if (matchingCustomers.length > 0) {
+        // Si hay varios, preferimos el que tenga medios de pago
+        for (const customer of matchingCustomers) {
             const methods = await stripe.paymentMethods.list({
                 customer: customer.id,
                 type: 'card',
@@ -36,13 +47,14 @@ export async function getStripeCustomer(email: string, fullName: string) {
                 return customer;
             }
         }
-        // Si ninguno tiene, devolvemos el más reciente
-        return customers.data.sort((a, b) => b.created - a.created)[0];
+        // Si ninguno tiene, devolvemos el más reciente de los que coinciden
+        return matchingCustomers.sort((a, b) => b.created - a.created)[0];
     }
 
-    // Create if not exists
+    // 3. Crear el cliente solo si después de la búsqueda rigurosa no existe
+    console.log(`[stripe] No matching customer found for ${normalizedEmail}. Creating new one.`);
     return await stripe.customers.create({
-        email: email,
+        email: normalizedEmail,
         name: fullName,
     });
 }

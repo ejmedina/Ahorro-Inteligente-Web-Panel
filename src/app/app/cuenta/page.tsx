@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
+import 'react-phone-number-input/style.css';
+import PhoneInput from 'react-phone-number-input';
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -15,7 +17,7 @@ import { User as UserIcon, Bell as BellIcon } from "lucide-react";
 const profileSchema = z.object({
     name: z.string().min(2, "El nombre es muy corto"),
     email: z.string().email("Email inválido"),
-    phone: z.string().optional()
+    phone: z.string().min(10, "El teléfono es requerido y debe incluir código de país")
 });
 
 type ProfileForm = z.infer<typeof profileSchema>;
@@ -35,7 +37,7 @@ export default function CuentaPage() {
 
     const currentSubStatus = user?.subscriptionStatus || 'Inactive';
 
-    const { register, handleSubmit, formState: { errors }, reset } = useForm<ProfileForm>({
+    const { register, handleSubmit, control, formState: { errors }, reset } = useForm<ProfileForm>({
         resolver: zodResolver(profileSchema),
         defaultValues: {
             name: user?.fullName ?? "",
@@ -145,13 +147,29 @@ export default function CuentaPage() {
                             disabled={!isEditing}
                             error={errors.email?.message}
                         />
-                        <Input
-                            label="Teléfono"
-                            type="tel"
-                            {...register("phone")}
-                            disabled={!isEditing}
-                            error={errors.phone?.message}
-                        />
+                        <div className="space-y-1.5">
+                            <label className="block text-sm font-medium text-gray-700">Teléfono móvil</label>
+                            <Controller
+                                name="phone"
+                                control={control}
+                                render={({ field }) => (
+                                    <PhoneInput
+                                        {...field}
+                                        international
+                                        defaultCountry="AR"
+                                        disabled={!isEditing}
+                                        limitMaxLength={true}
+                                        className={`flex items-center h-11 w-full rounded-lg border bg-white px-3 py-1 text-sm transition-all focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 ${
+                                            errors.phone ? 'border-red-500' : 'border-gray-300'
+                                        } ${!isEditing ? "opacity-50 cursor-not-allowed bg-gray-50" : ""}`}
+                                        numberInputProps={{
+                                            className: "flex-1 bg-transparent border-none focus:ring-0 focus:outline-none h-full w-full px-2 disabled:cursor-not-allowed"
+                                        }}
+                                    />
+                                )}
+                            />
+                            {errors.phone && <p className="text-sm text-red-600 font-medium">{errors.phone.message}</p>}
+                        </div>
 
                         {isEditing && (
                             <div className="flex justify-end space-x-3 pt-4">

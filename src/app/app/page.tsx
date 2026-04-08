@@ -13,9 +13,10 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { FileText, Clock, Plus, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { WhatsAppInviteBanner } from "@/components/dashboard/WhatsAppInviteBanner";
 
 export default function DashboardPage() {
-    const { user, isLoading: authLoading } = useAuth();
+    const { user, refreshUser, isLoading: authLoading } = useAuth();
     const [gestiones, setGestiones] = useState<ManagementRequest[]>([]);
     const [pagos, setPagos] = useState<Payment[]>([]);
     const [loading, setLoading] = useState(true);
@@ -81,6 +82,8 @@ export default function DashboardPage() {
                     </div>
                 </div>
             )}
+            
+            <WhatsAppInviteBanner user={user} onRefresh={refreshUser} />
 
             <div>
                 <h1 className="text-2xl font-bold tracking-tight text-gray-900">Hola, {user?.fullName?.split(' ')[0]} 👋</h1>

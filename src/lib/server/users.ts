@@ -12,6 +12,7 @@ export interface AirtableUser {
     recoveryToken?: string;
     recoveryExpiresAt?: string;
     subscriptionStatus?: string;
+    updatedAt?: string;
 }
 
 interface AirtableRecord {
@@ -41,9 +42,18 @@ function recordToUser(record: AirtableRecord): AirtableUser {
     
     // Helper para buscar campo por ID o por nombres comunes si el ID falla
     const findValue = (id: string, fallbacks: string[]): string | undefined => {
-        if (f[id] !== undefined) return f[id] as string;
+        const val = f[id] !== undefined ? f[id] : undefined;
+        if (val !== undefined) {
+             if (Array.isArray(val)) return val[0] as string;
+             return val as string;
+        }
+
         for (const name of fallbacks) {
-            if (f[name] !== undefined) return f[name] as string;
+            const fallbackVal = f[name];
+            if (fallbackVal !== undefined) {
+                if (Array.isArray(fallbackVal)) return fallbackVal[0] as string;
+                return fallbackVal as string;
+            }
         }
         return undefined;
     };
@@ -60,6 +70,7 @@ function recordToUser(record: AirtableRecord): AirtableUser {
         recoveryToken: findValue(FIELDS.RECOVERY_TOKEN, ['Recovery Token', 'Token de Recuperación']),
         recoveryExpiresAt: findValue(FIELDS.RECOVERY_EXPIRES, ['Recovery Expires At', 'Expiración Recuperación']),
         subscriptionStatus: findValue(FIELDS.SUBSCRIPTION_STATUS, ['Subscription Status']),
+        updatedAt: findValue(FIELDS.UPDATED_AT, ['Updated At', 'Actualizado', 'Updated']),
     };
 }
 

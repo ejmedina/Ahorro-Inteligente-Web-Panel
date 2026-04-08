@@ -23,6 +23,20 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Usuario no encontrado.' }, { status: 404 });
         }
 
+        // --- Protección Antispam (5 minutos) ---
+        if (whatsappOptIn && dbUser.subscriptionStatus === 'Pending' && dbUser.updatedAt) {
+            const lastUpdate = new Date(dbUser.updatedAt).getTime();
+            const now = Date.now();
+            const diffMinutes = (now - lastUpdate) / (1000 * 60);
+
+            if (diffMinutes < 5) {
+                const remaining = Math.ceil(5 - diffMinutes);
+                return NextResponse.json({ 
+                    error: `Por favor espera ${remaining} minuto${remaining > 1 ? 's' : ''} antes de solicitar otro mensaje.` 
+                }, { status: 429 });
+            }
+        }
+
         let newStatus = 'Inactive';
         let trimmedPhone = phone?.trim();
 

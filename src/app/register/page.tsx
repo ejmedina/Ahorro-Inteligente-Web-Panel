@@ -3,7 +3,9 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
+import 'react-phone-number-input/style.css';
+import PhoneInput from 'react-phone-number-input';
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/Button";
@@ -14,11 +16,10 @@ const registerSchema = z.object({
     name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
     email: z.string().email("Debe ser un email válido"),
     password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
-    whatsappOptIn: z.boolean(),
-    phone: z.string().optional(),
-}).refine((data) => !data.whatsappOptIn || (data.phone && data.phone.length > 5), {
-    message: "El teléfono es obligatorio si querés notificaciones por WhatsApp",
-    path: ["phone"],
+    phone: z.string().min(10, "El teléfono debe ser un formato válido e incluir código de país"),
+    acceptTerms: z.boolean().refine(val => val === true, {
+        message: "Debes aceptar los términos y condiciones para continuar"
+    }),
 });
 
 type RegisterForm = z.infer<typeof registerSchema>;
@@ -29,14 +30,9 @@ export default function RegisterPage() {
     const [successMessage, setSuccessMessage] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
-    const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<RegisterForm>({
+    const { register, handleSubmit, control, formState: { errors } } = useForm<RegisterForm>({
         resolver: zodResolver(registerSchema),
-        defaultValues: {
-            whatsappOptIn: false,
-        }
     });
-
-    const isWhatsAppSelected = watch("whatsappOptIn");
 
     const onSubmit = async (data: RegisterForm) => {
         setIsLoading(true);
@@ -50,8 +46,7 @@ export default function RegisterPage() {
                     name: data.name,
                     email: data.email,
                     password: data.password,
-                    phone: data.phone || undefined,
-                    whatsappOptIn: data.whatsappOptIn,
+                    phone: data.phone,
                 }),
             });
 
@@ -118,67 +113,45 @@ export default function RegisterPage() {
 
                             </div>
 
-                            <div className="pt-4 border-t border-gray-100">
-                                <p className="text-sm font-medium text-gray-700 mb-3">
-                                    Preferencias de notificación
-                                </p>
-                                <div className="space-y-3">
-                                    <label className="flex items-start space-x-3 cursor-pointer">
-                                        <div className="flex h-5 items-center">
-                                            <input
-                                                type="radio"
-                                                checked={isWhatsAppSelected === false}
-                                                onChange={() => setValue("whatsappOptIn", false, { shouldValidate: true })}
-                                                className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
+                                <div className="space-y-1.5">
+                                    <label className="block text-sm font-medium text-gray-700">Teléfono móvil</label>
+                                    <Controller
+                                        name="phone"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <PhoneInput
+                                                {...field}
+                                                international
+                                                defaultCountry="AR"
+                                                limitMaxLength={true}
+                                                className={`flex items-center h-11 w-full rounded-lg border bg-white px-3 py-1 text-sm transition-all focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 ${
+                                                    errors.phone ? 'border-red-500' : 'border-gray-300'
+                                                }`}
+                                                numberInputProps={{
+                                                    className: "flex-1 bg-transparent border-none focus:ring-0 focus:outline-none h-full w-full px-2"
+                                                }}
                                             />
-                                        </div>
-                                        <div className="text-sm border-l-2 pl-2 border-transparent">
-                                            <span className="font-medium text-gray-900 block">Solo Email</span>
-                                            <span className="text-gray-500 text-xs">Avisos importantes a tu correo</span>
-                                        </div>
-                                    </label>
-
-                                    <label className="flex items-start space-x-3 cursor-pointer">
-                                        <div className="flex h-5 items-center">
-                                            <input
-                                                type="radio"
-                                                checked={isWhatsAppSelected === true}
-                                                onChange={() => setValue("whatsappOptIn", true, { shouldValidate: true })}
-                                                className="h-4 w-4 border-gray-300 text-green-600 focus:ring-green-600 cursor-pointer"
-                                            />
-                                        </div>
-                                        <div className="text-sm border-l-2 pl-2 border-green-500">
-                                            <span className="font-medium text-gray-900 block">WhatsApp</span>
-                                            <span className="text-gray-500 text-xs">Recibí updates más rápidos en tu celular</span>
-                                        </div>
-                                    </label>
-                                </div>
-                            </div>
-
-                            {isWhatsAppSelected && (
-                                <div className="space-y-2 translate-y-0 opacity-100 transition-all duration-300 ease-in-out">
-                                    <Input
-                                        label="Teléfono"
-                                        type="tel"
-                                        placeholder="+54 11 1234 5678"
-                                        {...register("phone")}
-                                        error={errors.phone?.message}
+                                        )}
                                     />
-                                    <p className="text-xs text-gray-500">
-                                        Te enviaremos un mensaje de validación para activar el servicio.
-                                    </p>
+                                    {errors.phone && <p className="text-sm text-red-600 font-medium">{errors.phone.message}</p>}
                                 </div>
-                            )}
-                            
-                            {!isWhatsAppSelected && (
-                                <div className="hidden">
-                                    <Input
-                                        label="Teléfono (Opcional)"
-                                        type="tel"
-                                        {...register("phone")}
-                                    />
+
+                                <div className="flex items-start pt-2">
+                                    <div className="flex items-center h-5">
+                                        <input
+                                            id="terms"
+                                            type="checkbox"
+                                            className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500"
+                                            {...register("acceptTerms")}
+                                        />
+                                    </div>
+                                    <div className="ml-3 text-sm">
+                                        <label htmlFor="terms" className="font-medium text-gray-700">
+                                            He leído y acepto los <Link href="https://ahorrointeligente.com.ar/terminos-y-condiciones" target="_blank" className="text-blue-600 hover:underline">Términos y Condiciones</Link> y la <Link href="https://ahorrointeligente.com.ar/politica-de-privacidad" target="_blank" className="text-blue-600 hover:underline">Política de Privacidad</Link>.
+                                        </label>
+                                        {errors.acceptTerms && <p className="mt-1 text-red-600">{errors.acceptTerms.message}</p>}
+                                    </div>
                                 </div>
-                            )}
 
                             {error && (
                                 <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-100">
