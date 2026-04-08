@@ -20,25 +20,32 @@ export async function GET() {
         }
 
         let customerId = user.stripeCustomerId;
-        const stripeInstance = getStripe();
+        const normalizedUserEmail = user.email?.toLowerCase();
+        
+        if (!normalizedUserEmail) {
+            console.error('[stripe/data] User record is missing email:', user.recordId);
+            return NextResponse.json({ error: 'Email de usuario no encontrado.' }, { status: 400 });
+        }
 
+        const stripeInstance = getStripe();
+        
         // VALIDACIÓN DE SEGURIDAD: Verificar que el Customer ID pertenezca al email del usuario
         if (customerId) {
             try {
-                const customer = await stripeInstance.customers.retrieve(customerId);
-                if ((customer as any).deleted || (customer as any).email !== user.email) {
-                    console.warn(`[api/stripe/data] Customer ID ${customerId} no coincide con email ${user.email}. Buscando uno correcto.`);
+                const customer = await stripeInstance.customers.retrieve(customerId) as any;
+                if (customer.deleted || customer.email?.toLowerCase() !== normalizedUserEmail) {
+                    console.warn(`[api/stripe/data] Customer ID ${customerId} mismatch for ${normalizedUserEmail}. Finding correct one.`);
                     customerId = undefined;
                 }
             } catch (e) {
-                console.error(`[api/stripe/data] Error validando Customer ID ${customerId}:`, e);
+                console.error(`[api/stripe/data] Error validating customer ${customerId}:`, e);
                 customerId = undefined;
             }
         }
 
         // Si no tiene Customer ID válido, lo buscamos/creamos en Stripe y actualizamos Airtable
         if (!customerId) {
-            const customer = await getStripeCustomer(user.email, user.fullName);
+            const customer = await getStripeCustomer(normalizedUserEmail, user.fullName || 'Usuario');
             customerId = customer.id;
             await updateUser(user.recordId, { stripeCustomerId: customerId });
         }

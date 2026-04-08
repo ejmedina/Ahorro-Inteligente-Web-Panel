@@ -42,18 +42,20 @@ function recordToUser(record: AirtableRecord): AirtableUser {
     
     // Helper para buscar campo por ID o por nombres comunes si el ID falla
     const findValue = (id: string, fallbacks: string[]): string | undefined => {
-        const val = f[id] !== undefined ? f[id] : undefined;
-        if (val !== undefined) {
-             if (Array.isArray(val)) return val[0] as string;
-             return val as string;
-        }
+        const val = f[id];
+        
+        const processValue = (v: any): string | undefined => {
+            if (v === undefined || v === null) return undefined;
+            if (Array.isArray(v)) return v.length > 0 ? String(v[0]) : undefined;
+            return String(v);
+        };
+
+        const result = processValue(val);
+        if (result !== undefined) return result;
 
         for (const name of fallbacks) {
-            const fallbackVal = f[name];
-            if (fallbackVal !== undefined) {
-                if (Array.isArray(fallbackVal)) return fallbackVal[0] as string;
-                return fallbackVal as string;
-            }
+            const fallbackResult = processValue(f[name]);
+            if (fallbackResult !== undefined) return fallbackResult;
         }
         return undefined;
     };

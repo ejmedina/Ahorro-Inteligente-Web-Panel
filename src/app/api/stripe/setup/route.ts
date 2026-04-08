@@ -49,25 +49,31 @@ export async function POST(req: NextRequest) {
         }
 
         let customerId = user.stripeCustomerId;
+        const userEmail = user.email?.toLowerCase();
+        
+        if (!userEmail) {
+            console.error('[stripe/setup] User record is missing email:', user.recordId);
+            return NextResponse.json({ error: 'Tu perfil de usuario está incompleto (falta email). Contactá a soporte.' }, { status: 400 });
+        }
         
         // Verificación de integridad: Si tiene customerId, validamos en Stripe que el email coincida para evitar fugas.
         if (customerId) {
             try {
                 const stripe = getStripe();
                 const customer = await stripe.customers.retrieve(customerId) as any;
-                if (!customer || customer.deleted || customer.email?.toLowerCase() !== user.email.toLowerCase()) {
-                    console.warn(`[stripe/setup] Customer ID mismatch or deleted for user ${user.recordId}. Expected ${user.email}, found ${customer?.email}. Resetting...`);
+                if (!customer || customer.deleted || customer.email?.toLowerCase() !== userEmail) {
+                    console.warn(`[stripe/setup] Customer ID mismatch or deleted for user ${user.recordId}. Expected ${userEmail}, found ${customer?.email}. Resetting...`);
                     customerId = undefined; // Forzar regeneración
                 }
             } catch (e) {
-                console.error(`[stripe/setup] Error retrieving customer ${customerId}:`, e);
+                console.error(`[stripe/setup] Error retrieving customer ${customerId} for ${userEmail}:`, e);
                 customerId = undefined;
             }
         }
 
         if (!customerId) {
-            console.log(`[stripe/setup] Creating/Finding Stripe customer for user ${user.email}...`);
-            const customer = await getStripeCustomer(user.email, user.fullName);
+            console.log(`[stripe/setup] Creating/Finding Stripe customer for user ${userEmail}...`);
+            const customer = await getStripeCustomer(userEmail, user.fullName || 'Usuario');
             customerId = customer.id;
             await updateUser(user.recordId, { stripeCustomerId: customerId });
         }
