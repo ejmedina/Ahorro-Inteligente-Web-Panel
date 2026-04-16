@@ -55,10 +55,15 @@ export async function POST(req: NextRequest) {
 
         // Si el usuario optó por WhatsApp y el estado cambió a Pending, le enviamos el template
         if (whatsappOptIn && trimmedPhone) {
-            // Solo logueamos el error si falla el envío para no romper la experiencia
-            sendpulseService.sendWhatsAppTemplate(trimmedPhone).catch(e => {
-                console.error('[profile/preferences] Error enviando template de WA:', e);
-            });
+            console.log(`[profile/preferences] Solicitando envío de WhatsApp a ${trimmedPhone}`);
+            try {
+                // Await para evitar que la lambda de Vercel mate el proceso asíncrono
+                await sendpulseService.sendWhatsAppTemplate(trimmedPhone);
+                console.log(`[profile/preferences] Mensaje enviado a la cola exitosamente`);
+            } catch (e) {
+                // Solo logueamos el error si falla el envío para no romper la experiencia de usuario
+                console.error('[profile/preferences] Falló el envío de template de WA:', e);
+            }
         }
 
         return NextResponse.json({ success: true, subscriptionStatus: newStatus });

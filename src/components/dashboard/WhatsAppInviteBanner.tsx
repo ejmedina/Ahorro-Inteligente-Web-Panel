@@ -100,10 +100,23 @@ export function WhatsAppInviteBanner({ user, onRefresh }: WhatsAppInviteBannerPr
                 
                 <div className="flex-1">
                     {isPending ? (
-                        <>
+                        <div className="flex flex-col items-start">
                             <h3 className="text-sm font-semibold text-amber-900">Validación de WhatsApp pendiente</h3>
-                            <p className="text-sm text-amber-800 mt-0.5">Respondé al mensaje que te enviamos para activar las notificaciones rápidas.</p>
-                        </>
+                            <p className="text-sm text-amber-800 mt-0.5">
+                                Te enviamos un mensaje de confirmación. Por favor, revísalo y responde.
+                            </p>
+                            {timeLeft > 0 && (
+                                <div className="mt-2 bg-amber-100/50 border border-amber-200/50 rounded-md px-3 py-1.5 inline-flex items-center gap-2">
+                                    <span className="relative flex h-2 w-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                                    </span>
+                                    <p className="text-xs font-medium text-amber-800">
+                                        Por seguridad, podrás solicitar un nuevo envío en <strong className="font-bold">{formatTime(timeLeft)}</strong>
+                                    </p>
+                                </div>
+                            )}
+                        </div>
                     ) : (
                         <>
                             <h3 className="text-sm font-semibold text-green-900">¡Activá las notificaciones por WhatsApp!</h3>

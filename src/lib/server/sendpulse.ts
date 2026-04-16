@@ -77,6 +77,8 @@ class SendpulseService {
                     }
                 }
             };
+            
+            console.log(`[SendpulseService] Preparando envío WA. Template: '${templateName}', Phone: ${body.phone}`);
 
             const res = await fetch('https://api.sendpulse.com/whatsapp/contacts/sendTemplate', {
                 method: 'POST',
@@ -89,15 +91,17 @@ class SendpulseService {
 
             if (!res.ok) {
                 const errorText = await res.text();
-                throw new Error(`SendPulse API error: ${res.status} ${res.statusText} - ${errorText}`);
+                // Mejor visibilidad de error detallado en prod
+                console.error(`[SendpulseService] Failed API Request (${res.status}): ${errorText}`);
+                throw new Error(`SendPulse API error: ${res.status} ${res.statusText}`);
             }
 
-            console.log(`[SendpulseService] Template '${templateName}' enviado a ${phone}`);
+            console.log(`[SendpulseService] Template '${templateName}' enviado correctamente a ${body.phone}`);
             return true;
         } catch (error) {
             console.error('[SendpulseService] Error enviando WhatsApp:', error);
-            // No bloqueamos todo el registro por un fallo en el WA.
-            return false;
+            // Lanza el error para poder capturarlo e informar (u omitir) en el controlador superior
+            throw error;
         }
     }
 }
