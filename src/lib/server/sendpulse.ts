@@ -80,7 +80,7 @@ class SendpulseService {
             
             console.log(`[SendpulseService] Preparando envío WA. Template: '${templateName}', Phone: ${body.phone}`);
 
-            const res = await fetch('https://api.sendpulse.com/whatsapp/contacts/sendTemplate', {
+            const res = await fetch('https://api.sendpulse.com/whatsapp/contacts/sendTemplateByPhone', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
