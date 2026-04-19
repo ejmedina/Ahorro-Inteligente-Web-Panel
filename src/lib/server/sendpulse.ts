@@ -57,7 +57,7 @@ class SendpulseService {
      * @param templateName Nombre de la plantilla aprobada en SendPulse
      * @param language Código de idioma (Ej: 'es', 'es_AR')
      */
-    async sendWhatsAppTemplate(phone: string, templateName: string = 'activar_notificaciones', language: string = 'es'): Promise<boolean> {
+    async sendWhatsAppTemplate(phone: string, templateName: string = 'activar_notificaciones', language: string = 'es', variables: string[] = []): Promise<boolean> {
         const config = getSendpulseConfig();
         if (!config.botId) {
             console.warn('SENDPULSE_BOT_ID missing. Simulando envío a ' + phone);
@@ -74,7 +74,18 @@ class SendpulseService {
                     name: templateName,
                     language: {
                         code: language
-                    }
+                    },
+                    ...(variables.length > 0 && {
+                        components: [
+                            {
+                                type: "body",
+                                parameters: variables.map(text => ({
+                                    type: "text",
+                                    text: text
+                                }))
+                            }
+                        ]
+                    })
                 }
             };
             

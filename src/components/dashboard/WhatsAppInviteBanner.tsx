@@ -76,11 +76,17 @@ export function WhatsAppInviteBanner({ user, onRefresh }: WhatsAppInviteBannerPr
             const json = await res.json();
             if (!res.ok) {
                 setMessage({ text: json.error || "Error al activar WhatsApp.", type: 'error' });
+                // Si el error es 429, significa que el timer debería estar activo
+                if (res.status === 429 && user) {
+                    onRefresh();
+                }
             } else {
                 setMessage({ text: "¡Mensaje de activación enviado! Respondé al chat para confirmar.", type: 'success' });
                 setIsExpanding(false);
-                // Damos tiempo a que vea el mensaje antes de refrescar y que desaparezca el banner si pasara a otro estado
-                setTimeout(onRefresh, 3000);
+                
+                // Refrescamos los datos del usuario para que el banner pase a estado 'Pending'
+                // y capture la nueva fecha de updatedAt para el timer
+                await onRefresh();
             }
         } catch (err) {
             setMessage({ text: "Error de conexión al servidor.", type: 'error' });

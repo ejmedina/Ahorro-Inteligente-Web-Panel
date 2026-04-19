@@ -24,15 +24,17 @@ export async function POST(req: NextRequest) {
         }
 
         // --- Protección Antispam (5 minutos) ---
-        if (whatsappOptIn && dbUser.subscriptionStatus === 'Pending' && dbUser.updatedAt) {
+        // Validamos solo si el usuario ya tiene una fecha de actualización (ya intentó antes)
+        if (dbUser.updatedAt) {
             const lastUpdate = new Date(dbUser.updatedAt).getTime();
             const now = Date.now();
             const diffMinutes = (now - lastUpdate) / (1000 * 60);
 
             if (diffMinutes < 5) {
                 const remaining = Math.ceil(5 - diffMinutes);
+                console.log(`[profile/preferences] Antispam activado para ${session.email}. Restan ${remaining} min.`);
                 return NextResponse.json({ 
-                    error: `Por favor espera ${remaining} minuto${remaining > 1 ? 's' : ''} antes de solicitar otro mensaje.` 
+                    error: `Por seguridad, debés esperar ${remaining} minuto${remaining > 1 ? 's' : ''} antes de solicitar otro mensaje.` 
                 }, { status: 429 });
             }
         }
@@ -48,6 +50,7 @@ export async function POST(req: NextRequest) {
             newStatus = 'Pending';
         }
 
+        // Actualizamos el usuario en Airtable (esto también refresca updatedAt)
         await updateUser(dbUser.recordId, {
             subscriptionStatus: newStatus,
             phone: trimmedPhone || undefined
@@ -55,18 +58,27 @@ export async function POST(req: NextRequest) {
 
         // Si el usuario optó por WhatsApp y el estado cambió a Pending, le enviamos el template
         if (whatsappOptIn && trimmedPhone) {
-            console.log(`[profile/preferences] Solicitando envío de WhatsApp a ${trimmedPhone}`);
+            // Normalizar teléfono eliminando caracteres no numéricos para la API
+            const apiPhone = trimmedPhone.replace(/[^0-9]/g, '');
+            const firstName = (dbUser.fullName || 'Usuario').trim().split(' ')[0] || 'Usuario';
+            
+            console.log(`[profile/preferences] Intentando envío WA: Phone=${apiPhone}, Name=${firstName}, Template=activar_notificaciones`);
+            
             try {
-                // Await para evitar que la lambda de Vercel mate el proceso asíncrono
-                await sendpulseService.sendWhatsAppTemplate(trimmedPhone);
-                console.log(`[profile/preferences] Mensaje enviado a la cola exitosamente`);
-            } catch (e) {
-                // Solo logueamos el error si falla el envío para no romper la experiencia de usuario
-                console.error('[profile/preferences] Falló el envío de template de WA:', e);
+                await sendpulseService.sendWhatsAppTemplate(apiPhone, 'activar_notificaciones', 'es', [firstName]);
+                console.log(`[profile/preferences] Envío exitoso a SendPulse para ${apiPhone}`);
+            } catch (e: any) {
+                // Logueamos el error detallado incluyendo la respuesta de la API si está disponible
+                console.error('[profile/preferences] Error crítico en SendPulse:', e.message);
+                // No devolvemos error 500 porque el registro en Airtable fue exitoso
             }
         }
 
-        return NextResponse.json({ success: true, subscriptionStatus: newStatus });
+        return NextResponse.json({ 
+            success: true, 
+            subscriptionStatus: newStatus,
+            updatedAt: new Date().toISOString() // Devolvemos la nueva fecha para el timer del front
+        });
     } catch (error) {
         console.error('[profile/preferences] Error:', error);
         return NextResponse.json({ error: 'Error interno del servidor.' }, { status: 500 });
