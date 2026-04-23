@@ -81,7 +81,7 @@ export function WhatsAppInviteBanner({ user, onRefresh }: WhatsAppInviteBannerPr
                     onRefresh();
                 }
             } else {
-                setMessage({ text: "¡Mensaje de activación enviado! Respondé al chat para confirmar.", type: 'success' });
+                setMessage({ text: "¡Mensaje de activación enviado! Entrá a WhatsApp y tocá el botón Activar.", type: 'success' });
                 setIsExpanding(false);
                 
                 // Refrescamos los datos del usuario para que el banner pase a estado 'Pending'

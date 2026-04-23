@@ -57,7 +57,7 @@ class SendpulseService {
      * @param templateName Nombre de la plantilla aprobada en SendPulse
      * @param language Código de idioma (Ej: 'es', 'es_AR')
      */
-    async sendWhatsAppTemplate(phone: string, templateName: string = 'activar_notificaciones', language: string = 'es', variables: string[] = []): Promise<boolean> {
+    async sendWhatsAppTemplate(phone: string, templateName: string = 'activar_notificaciones', language: string = 'es', variables: string[] = [], buttonUrlParam?: string): Promise<boolean> {
         const config = getSendpulseConfig();
         if (!config.botId) {
             console.warn('SENDPULSE_BOT_ID missing. Simulando envío a ' + phone);
@@ -67,6 +67,32 @@ class SendpulseService {
         try {
             const token = await this.getAccessToken();
 
+            const components: any[] = [];
+            
+            if (variables.length > 0) {
+                components.push({
+                    type: "body",
+                    parameters: variables.map(text => ({
+                        type: "text",
+                        text: text
+                    }))
+                });
+            }
+
+            if (buttonUrlParam) {
+                components.push({
+                    type: "button",
+                    sub_type: "url",
+                    index: "0",
+                    parameters: [
+                        {
+                            type: "text",
+                            text: buttonUrlParam
+                        }
+                    ]
+                });
+            }
+
             const body = {
                 bot_id: config.botId,
                 phone: phone.replace(/[^0-9]/g, ''), // Asegurar solo dígitos
@@ -75,17 +101,7 @@ class SendpulseService {
                     language: {
                         code: language
                     },
-                    ...(variables.length > 0 && {
-                        components: [
-                            {
-                                type: "body",
-                                parameters: variables.map(text => ({
-                                    type: "text",
-                                    text: text
-                                }))
-                            }
-                        ]
-                    })
+                    ...(components.length > 0 && { components })
                 }
             };
             

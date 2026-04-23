@@ -4,7 +4,7 @@ import { findUserByPhone, updateUser } from '@/lib/server/users';
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        
+
         // Log para depuración cuando se conecten por primera vez
         console.log('[Webhook SendPulse]', JSON.stringify(body, null, 2));
 
@@ -19,11 +19,11 @@ export async function POST(req: NextRequest) {
 
             if (isMessage && phone) {
                 const normalizedText = text.trim().toLowerCase();
-                
+
                 // Si el mensaje tiene intención de activar ("si", "sí", "activar", etc.)
                 if (['si', 'sí', 'activar', 'aceptar', 'ok', 'yes'].includes(normalizedText)) {
                     const user = await findUserByPhone(phone);
-                    
+
                     if (user && user.subscriptionStatus === 'Pending') {
                         // Cambiamos el estado de pending a active
                         await updateUser(user.recordId, {

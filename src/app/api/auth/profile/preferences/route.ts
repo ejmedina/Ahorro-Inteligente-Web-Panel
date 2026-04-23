@@ -62,10 +62,10 @@ export async function POST(req: NextRequest) {
             const apiPhone = trimmedPhone.replace(/[^0-9]/g, '');
             const firstName = (dbUser.fullName || 'Usuario').trim().split(' ')[0] || 'Usuario';
             
-            console.log(`[profile/preferences] Intentando envío WA: Phone=${apiPhone}, Name=${firstName}, Template=activar_notificaciones`);
+            console.log(`[profile/preferences] Intentando envío WA: Phone=${apiPhone}, Name=${firstName}, Template=activar_notificaciones_1`);
             
             try {
-                await sendpulseService.sendWhatsAppTemplate(apiPhone, 'activar_notificaciones', 'es', [firstName]);
+                await sendpulseService.sendWhatsAppTemplate(apiPhone, 'activar_notificaciones_1', 'es', [firstName], dbUser.recordId);
                 console.log(`[profile/preferences] Envío exitoso a SendPulse para ${apiPhone}`);
             } catch (e: any) {
                 // Logueamos el error detallado incluyendo la respuesta de la API si está disponible
