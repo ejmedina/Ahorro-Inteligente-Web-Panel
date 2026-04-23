@@ -12,7 +12,7 @@ export default function WhatsAppVerifiedPage() {
                 <h1 className="text-2xl font-bold text-gray-900 mb-2">¡WhatsApp Activado!</h1>
                 
                 <p className="text-gray-600 mb-8 leading-relaxed">
-                    Tus notificaciones han sido activadas exitosamente. Ya podés cerrar esta ventana y volver a tu computadora de forma segura.
+                    Tus notificaciones han sido activadas exitosamente. Ya podés cerrar esta ventana de forma segura.
                 </p>
                 
                 <Link 
