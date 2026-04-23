@@ -3,11 +3,11 @@ import { updateUser } from '@/lib/server/users';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-    const { id } = await params;
+export async function GET(req: NextRequest) {
+    const id = req.nextUrl.searchParams.get('id');
 
     if (!id) {
-        return NextResponse.json({ error: 'Falta parámetro id.' }, { status: 400 });
+        return NextResponse.json({ error: 'Falta parámetro id en la URL.' }, { status: 400 });
     }
 
     try {
