@@ -22,28 +22,40 @@ export function WhatsAppInviteBanner({ user, onRefresh }: WhatsAppInviteBannerPr
     const [timeLeft, setTimeLeft] = useState(0);
 
     useEffect(() => {
-        if (!user?.updatedAt) return;
+        const stored = localStorage.getItem('wa_timer_end');
+        if (stored) {
+            const end = parseInt(stored);
+            const remaining = Math.floor((end - Date.now()) / 1000);
+            if (remaining > 0) {
+                setTimeLeft(remaining);
+            } else {
+                localStorage.removeItem('wa_timer_end');
+            }
+        }
+    }, [isPending]);
 
-        const calculateTimeLeft = () => {
-            const lastUpdate = new Date(user.updatedAt).getTime();
-            const now = Date.now();
-            const diffSeconds = Math.floor((now - lastUpdate) / 1000);
-            const remaining = (5 * 60) - diffSeconds;
-            return remaining > 0 ? remaining : 0;
-        };
-
-        setTimeLeft(calculateTimeLeft());
-
+    useEffect(() => {
+        if (timeLeft <= 0) return;
         const timer = setInterval(() => {
-            const remaining = calculateTimeLeft();
-            setTimeLeft(remaining);
-            if (remaining <= 0) {
+            const stored = localStorage.getItem('wa_timer_end');
+            if (stored) {
+                const end = parseInt(stored);
+                const remaining = Math.floor((end - Date.now()) / 1000);
+                if (remaining > 0) {
+                    setTimeLeft(remaining);
+                } else {
+                    setTimeLeft(0);
+                    localStorage.removeItem('wa_timer_end');
+                    clearInterval(timer);
+                }
+            } else {
+                setTimeLeft(0);
                 clearInterval(timer);
             }
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [user?.updatedAt]);
+    }, [timeLeft]);
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
@@ -76,16 +88,23 @@ export function WhatsAppInviteBanner({ user, onRefresh }: WhatsAppInviteBannerPr
             const json = await res.json();
             if (!res.ok) {
                 setMessage({ text: json.error || "Error al activar WhatsApp.", type: 'error' });
-                // Si el error es 429, significa que el timer debería estar activo
-                if (res.status === 429 && user) {
-                    onRefresh();
+                // Si el error es 429, inicializamos o sincronizamos el timer del front
+                if (res.status === 429) {
+                    const secs = json.remainingSeconds || 300;
+                    localStorage.setItem('wa_timer_end', (Date.now() + (secs * 1000)).toString());
+                    setTimeLeft(secs);
+                    if (user) onRefresh();
                 }
             } else {
                 setMessage({ text: "¡Mensaje de activación enviado! Entrá a WhatsApp y tocá el botón Activar.", type: 'success' });
                 setIsExpanding(false);
                 
+                // Guardamos timer de 5 minutos exactos y arrancamos
+                const timerEnd = Date.now() + (5 * 60 * 1000);
+                localStorage.setItem('wa_timer_end', timerEnd.toString());
+                setTimeLeft(5 * 60);
+
                 // Refrescamos los datos del usuario para que el banner pase a estado 'Pending'
-                // y capture la nueva fecha de updatedAt para el timer
                 await onRefresh();
             }
         } catch (err) {

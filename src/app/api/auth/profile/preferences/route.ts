@@ -23,19 +23,20 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Usuario no encontrado.' }, { status: 404 });
         }
 
-        // --- Protección Antispam (5 minutos) ---
-        // Validamos solo si el usuario ya tiene una fecha de actualización (ya intentó antes)
-        if (dbUser.updatedAt) {
-            const lastUpdate = new Date(dbUser.updatedAt).getTime();
-            const now = Date.now();
-            const diffMinutes = (now - lastUpdate) / (1000 * 60);
-
-            if (diffMinutes < 5) {
-                const remaining = Math.ceil(5 - diffMinutes);
-                console.log(`[profile/preferences] Antispam activado para ${session.email}. Restan ${remaining} min.`);
-                return NextResponse.json({ 
-                    error: `Por seguridad, debés esperar ${remaining} minuto${remaining > 1 ? 's' : ''} antes de solicitar otro mensaje.` 
-                }, { status: 429 });
+        // --- Protección Antispam (5 minutos) con Cookies ---
+        if (whatsappOptIn) {
+            const waLastReq = req.cookies.get('wa_last_request')?.value;
+            if (waLastReq) {
+                const diffMinutes = (Date.now() - parseInt(waLastReq)) / (1000 * 60);
+                if (diffMinutes < 5) {
+                    const remaining = Math.ceil(5 - diffMinutes);
+                    const remainingSeconds = Math.ceil((5 - diffMinutes) * 60);
+                    console.log(`[profile/preferences] Antispam activado para ${session.email}. Restan ${remaining} min.`);
+                    return NextResponse.json({ 
+                        error: `Por seguridad, debés esperar ${remaining} minuto${remaining > 1 ? 's' : ''} antes de solicitar otro mensaje.`,
+                        remainingSeconds
+                    }, { status: 429 });
+                }
             }
         }
 
@@ -74,11 +75,21 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        return NextResponse.json({ 
+        const response = NextResponse.json({ 
             success: true, 
             subscriptionStatus: newStatus,
-            updatedAt: new Date().toISOString() // Devolvemos la nueva fecha para el timer del front
         });
+
+        // Set the anti-spam cookie on success
+        if (whatsappOptIn && trimmedPhone) {
+            response.cookies.set('wa_last_request', Date.now().toString(), { 
+                maxAge: 5 * 60, 
+                httpOnly: true,
+                path: '/'
+            });
+        }
+
+        return response;
     } catch (error) {
         console.error('[profile/preferences] Error:', error);
         return NextResponse.json({ error: 'Error interno del servidor.' }, { status: 500 });
