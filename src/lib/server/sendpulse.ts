@@ -83,7 +83,7 @@ class SendpulseService {
                 components.push({
                     type: "button",
                     sub_type: "url",
-                    index: "1",
+                    index: 0,
                     parameters: [
                         {
                             type: "text",
