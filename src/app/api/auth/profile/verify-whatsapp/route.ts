@@ -13,10 +13,10 @@ export async function GET(req: NextRequest) {
     try {
         await updateUser(id, { subscriptionStatus: 'Active' });
         console.log(`[profile/verify-whatsapp] Whatsapp activado para recordId: ${id}`);
-        // Redirige a la aplicación principal indicando éxito
-        return NextResponse.redirect(new URL('/app?wa_verified=true', req.url));
+        // Redirige a una landing pública de éxito
+        return NextResponse.redirect(new URL('/whatsapp-verified', req.url));
     } catch (error: any) {
         console.error('[profile/verify-whatsapp] Error al validar WhatsApp vía URL:', error.message);
-        return NextResponse.redirect(new URL('/app?wa_error=true', req.url));
+        return NextResponse.redirect(new URL('/login?wa_error=true', req.url));
     }
 }
