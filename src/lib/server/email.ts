@@ -30,9 +30,19 @@ async function sendEmail({ to, subject, html }: { to: { email: string, name: str
     });
 
     if (!response.ok) {
-        const error = await response.json();
-        console.error('Error enviando email via ZeptoMail:', error);
-        throw new Error('Error al enviar el email');
+        let errorDetalle = 'Error desconocido';
+        try {
+            const error = await response.json();
+            errorDetalle = JSON.stringify(error, null, 2);
+        } catch {
+            errorDetalle = await response.text();
+        }
+        
+        console.error('🚨 [ZeptoMail] Error crítico enviando email:');
+        console.error(`Status: ${response.status} ${response.statusText}`);
+        console.error(`Detalle: ${errorDetalle}`);
+        
+        throw new Error(`Error al enviar el email vía ZeptoMail: ${response.status} - ${errorDetalle}`);
     }
 
     return response.json();
