@@ -44,7 +44,7 @@ export async function createNegotiationWithInvoice(userId: string, file: File, n
     
     try {
         const blob = await put(filename, file, {
-            access: 'public',
+            access: 'private',
             token: process.env.BLOB_READ_WRITE_TOKEN,
         });
         blobUrl = blob.url;
@@ -53,11 +53,14 @@ export async function createNegotiationWithInvoice(userId: string, file: File, n
         throw new Error('Error al subir la factura al almacenamiento.');
     }
 
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dashboard.ahorrointeligente.com.ar';
+    const proxyUrl = `${appUrl}/api/blob?url=${encodeURIComponent(blobUrl)}`;
+
     // 3. Crear el registro en la tabla Invoices
     const invoiceFields: any = {
         [INVOICE_FIELDS.DATE]: new Date().toISOString().split('T')[0],
         [INVOICE_FIELDS.USER]: [userId],
-        [INVOICE_FIELDS.PHOTO]: [{ url: blobUrl }] // Airtable descargará el archivo desde esta URL
+        [INVOICE_FIELDS.PHOTO]: [{ url: proxyUrl }] // Airtable descargará el archivo desde esta URL proxy
     };
 
     if (dni) {
