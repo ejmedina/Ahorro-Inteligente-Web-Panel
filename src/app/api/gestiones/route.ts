@@ -16,6 +16,7 @@ export async function POST(req: NextRequest) {
         const file = formData.get('file') as File;
         const notes = formData.get('notes') as string;
         const dni = formData.get('dni') as string;
+        const service = formData.get('service') as string;
 
         if (!file) {
             return NextResponse.json({ error: 'Archivo de factura requerido' }, { status: 400 });
@@ -26,7 +27,8 @@ export async function POST(req: NextRequest) {
             session.airtableRecordId,
             file,
             notes,
-            dni
+            dni,
+            service
         );
 
         return NextResponse.json({

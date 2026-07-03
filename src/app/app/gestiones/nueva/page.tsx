@@ -16,6 +16,8 @@ export default function NuevaGestionPage() {
     const [file, setFile] = useState<File | null>(null);
     const [dni, setDni] = useState("");
     const [notes, setNotes] = useState("");
+    const [service, setService] = useState("");
+    const [otherService, setOtherService] = useState("");
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
@@ -23,6 +25,14 @@ export default function NuevaGestionPage() {
         e.preventDefault();
         if (!file) {
             setError("Por favor subí la última factura de tu servicio.");
+            return;
+        }
+        if (!service) {
+            setError("Por favor seleccioná un servicio.");
+            return;
+        }
+        if (service === "Otro" && !otherService) {
+            setError("Por favor especificá el nombre del servicio.");
             return;
         }
         if (!dni) {
@@ -34,7 +44,10 @@ export default function NuevaGestionPage() {
 
         try {
             if (!user?.airtableRecordId) throw new Error("No user found");
-            const newGestion = await managementService.createGestion(user.airtableRecordId, file, notes, dni);
+            
+            const finalService = service === "Otro" ? otherService : service;
+            const newGestion = await managementService.createGestion(user.airtableRecordId, file, notes, dni, finalService);
+            
             router.push(`/app/gestiones/${newGestion.id}`);
         } catch (err: any) {
             setError(err.message || "Ocurrió un error al crear la gestión.");
@@ -75,6 +88,37 @@ export default function NuevaGestionPage() {
                                 required
                             />
                         </div>
+
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium text-gray-900">Servicio (Requerido)</label>
+                            <select
+                                value={service}
+                                onChange={(e) => setService(e.target.value)}
+                                className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                required
+                            >
+                                <option value="" disabled>Seleccionar...</option>
+                                <option value="Personal Flow">Personal Flow</option>
+                                <option value="Telecentro">Telecentro</option>
+                                <option value="Movistar">Movistar</option>
+                                <option value="Claro">Claro</option>
+                                <option value="DirecTV">DirecTV</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+
+                        {service === "Otro" && (
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-900">¿Qué servicio es? (Requerido)</label>
+                                <Input
+                                    type="text"
+                                    value={otherService}
+                                    onChange={(e) => setOtherService(e.target.value)}
+                                    placeholder="Ej: iPlan, Claro Hogar..."
+                                    required
+                                />
+                            </div>
+                        )}
 
                         <div className="space-y-2">
                             <label className="block text-sm font-medium text-gray-900">Última factura (Requerido)</label>

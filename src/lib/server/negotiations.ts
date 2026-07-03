@@ -3,7 +3,7 @@ import { getPaymentMethods, getStripeCustomer } from './stripe';
 import { updateUser } from './users';
 import { put } from '@vercel/blob';
 
-export async function createNegotiationWithInvoice(userId: string, file: File, notes?: string, dni?: string) {
+export async function createNegotiationWithInvoice(userId: string, file: File, notes?: string, dni?: string, service?: string) {
     const config = getAirtableConfig();
 
     // 1. Verificar si el usuario tiene métodos de pago reales
@@ -44,7 +44,7 @@ export async function createNegotiationWithInvoice(userId: string, file: File, n
     
     try {
         const blob = await put(filename, file, {
-            access: 'private',
+            access: 'public',
             token: process.env.BLOB_READ_WRITE_TOKEN,
         });
         blobUrl = blob.url;
@@ -96,6 +96,7 @@ export async function createNegotiationWithInvoice(userId: string, file: File, n
                 [NEGOTIATION_FIELDS.INVOICE]: [newInvoice.id],
                 [NEGOTIATION_FIELDS.STATUS]: initialStatus,
                 [NEGOTIATION_FIELDS.NOTES]: notes || '',
+                ...(service ? { [NEGOTIATION_FIELDS.SERVICE]: service } : {})
             }
         })
     });
@@ -124,7 +125,7 @@ export async function getUserNegotiations(userId: string, email?: string) {
     const sEmail = email ? sanitizeAirtableValue(email) : '';
 
     const formula = email 
-        ? `{${NEGOTIATION_FIELDS.EMAIL_LOOKUP}}='${sEmail}'`
+        ? `FIND('${sEmail}', {${NEGOTIATION_FIELDS.EMAIL_LOOKUP}} & "")`
         : `FIND('${sUserId}', {${NEGOTIATION_FIELDS.USER}} & "")`;
 
     const url = `https://api.airtable.com/v0/${config.baseId}/${config.negotiationsTableId}?filterByFormula=${encodeURIComponent(formula)}&returnFieldsByFieldId=1`;
