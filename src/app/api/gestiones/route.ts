@@ -57,11 +57,13 @@ export async function GET(req: NextRequest) {
             headers: { 'Authorization': `Bearer ${config.apiKey}` }
         });
 
+        let dbEmail = session.email;
+
         if (userRes.ok) {
             const userData = await userRes.json();
             let customerId = userData.fields[FIELDS.STRIPE_CUSTOMER_ID];
             const fullName = userData.fields[FIELDS.FULL_NAME];
-            const email = userData.fields[FIELDS.EMAIL];
+            dbEmail = userData.fields[FIELDS.EMAIL];
 
             const { getPaymentMethods, getStripeCustomer } = require('@/lib/server/stripe');
             const { syncNegotiationsStatus } = require('@/lib/server/syncPayloads');
@@ -73,8 +75,8 @@ export async function GET(req: NextRequest) {
             }
 
             // Si el customer actual no tiene métodos, intentamos buscar uno mejor (autocorrección)
-            if (methods.length === 0) {
-                const betterCustomer = await getStripeCustomer(email, fullName);
+            if (methods.length === 0 && dbEmail) {
+                const betterCustomer = await getStripeCustomer(dbEmail, fullName);
                 if (betterCustomer.id !== customerId) {
                     console.log(`[api/gestiones] Auto-corrigiendo customer ID de ${customerId} a ${betterCustomer.id}`);
                     customerId = betterCustomer.id;
@@ -83,10 +85,10 @@ export async function GET(req: NextRequest) {
                 }
             }
 
-            await syncNegotiationsStatus(userId, methods.length > 0, session.email);
+            await syncNegotiationsStatus(userId, methods.length > 0, dbEmail);
         }
 
-        const gestiones = await getUserNegotiations(userId, session.email);
+        const gestiones = await getUserNegotiations(userId, dbEmail);
 
         return NextResponse.json({
             success: true,

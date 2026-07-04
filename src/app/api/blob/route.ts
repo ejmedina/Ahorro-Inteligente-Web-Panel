@@ -16,10 +16,12 @@ export async function GET(req: NextRequest) {
         if (!response.ok) throw new Error('Failed to fetch blob');
         
         const blob = await response.blob();
+        const filename = searchParams.get('filename') || blobUrl.split('/').pop() || 'factura.pdf';
+
         return new NextResponse(blob, {
             headers: {
                 'Content-Type': response.headers.get('Content-Type') || 'application/pdf',
-                'Content-Disposition': 'inline'
+                'Content-Disposition': `inline; filename="${filename}"`
             }
         });
     } catch (error) {
