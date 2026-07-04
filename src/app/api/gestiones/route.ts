@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
         // 1. Obtener el customerId de Airtable para validar en Stripe
         const config = require('@/lib/server/airtableFieldIds').getAirtableConfig();
         const FIELDS = require('@/lib/server/airtableFieldIds').FIELDS;
-        const userRes = await fetch(`https://api.airtable.com/v0/${config.baseId}/${config.usersTableId}/${userId}`, {
+        const userRes = await fetch(`https://api.airtable.com/v0/${config.baseId}/${config.usersTableId}/${userId}?returnFieldsByFieldId=1`, {
             headers: { 'Authorization': `Bearer ${config.apiKey}` }
         });
 

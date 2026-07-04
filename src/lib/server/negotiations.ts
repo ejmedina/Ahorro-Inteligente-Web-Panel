@@ -128,8 +128,8 @@ export async function getUserNegotiations(userId: string, email?: string) {
     const sEmail = email ? sanitizeAirtableValue(email) : '';
 
     const formula = email 
-        ? `FIND('${sEmail}', {${NEGOTIATION_FIELDS.EMAIL_LOOKUP}} & "")`
-        : `FIND('${sUserId}', {${NEGOTIATION_FIELDS.USER}} & "")`;
+        ? `SEARCH('${sEmail}', {${NEGOTIATION_FIELDS.EMAIL_LOOKUP}} & "")`
+        : `SEARCH('${sUserId}', {${NEGOTIATION_FIELDS.USER}} & "")`;
 
     const url = `https://api.airtable.com/v0/${config.baseId}/${config.negotiationsTableId}?filterByFormula=${encodeURIComponent(formula)}&returnFieldsByFieldId=1`;
     
