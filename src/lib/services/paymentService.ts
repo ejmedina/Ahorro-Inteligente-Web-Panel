@@ -42,6 +42,18 @@ class PaymentService {
         return data.url;
     }
 
+    async linkExistingMethod(negotiationId: string): Promise<void> {
+        const res = await fetch('/api/stripe/link-existing', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ negotiationId })
+        });
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'Error al vincular medio de pago');
+        }
+    }
+
     async setDefaultMethod(_userId: string, id: string): Promise<void> {
         const res = await fetch(`/api/stripe/methods/${id}`, {
             method: 'PATCH'

@@ -78,36 +78,57 @@ export async function POST(req: NextRequest) {
             await updateUser(user.recordId, { stripeCustomerId: customerId });
         }
 
-        // 1. Crear la Suscripción en Airtable como requisito
-        const subFields: any = {
-            "Subscription Plan": "Fee",
-            "Status": "Unpaid",
-            "Payment Method": "Stripe",
-            "Users": [user.recordId]
-        };
+        // 1. Buscar si ya existe una Suscripción Unpaid para esta gestión
+        let subscriptionId;
 
         if (negotiationId) {
-            subFields["Negotiations"] = [negotiationId];
+            console.log(`[stripe/setup] Verificando si ya existe una suscripción para la gestión ${negotiationId}...`);
+            const sNegotiationId = sanitizeAirtableValue(negotiationId);
+            const searchSubUrl = `https://api.airtable.com/v0/${config.baseId}/${config.subscriptionsTableId}?filterByFormula=${encodeURIComponent(`AND(FIND('${sNegotiationId}', {Negotiations} & ""), {Status}='Unpaid')`)}&maxRecords=1`;
+            const searchSubRes = await fetch(searchSubUrl, {
+                headers: { 'Authorization': `Bearer ${config.apiKey}` }
+            });
+            if (searchSubRes.ok) {
+                const searchSubData = await searchSubRes.json();
+                if (searchSubData.records && searchSubData.records.length > 0) {
+                    subscriptionId = searchSubData.records[0].id;
+                    console.log(`[stripe/setup] Se encontró suscripción existente: ${subscriptionId}`);
+                }
+            }
         }
 
-        console.log('[stripe/setup] Creating subscription record in Airtable...');
-        const subRes = await fetch(`https://api.airtable.com/v0/${config.baseId}/${config.subscriptionsTableId}`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${config.apiKey}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ fields: subFields })
-        });
+        if (!subscriptionId) {
+            // Crear la Suscripción en Airtable como requisito
+            const subFields: any = {
+                "Subscription Plan": "Fee",
+                "Status": "Unpaid",
+                "Payment Method": "Stripe",
+                "Users": [user.recordId]
+            };
 
-        if (!subRes.ok) {
-            const err = await subRes.json();
-            console.error('[stripe/setup] Airtable Subscription Error:', err);
-            throw new Error(`Error creando suscripción: ${JSON.stringify(err)}`);
+            if (negotiationId) {
+                subFields["Negotiations"] = [negotiationId];
+            }
+
+            console.log('[stripe/setup] Creating subscription record in Airtable...');
+            const subRes = await fetch(`https://api.airtable.com/v0/${config.baseId}/${config.subscriptionsTableId}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${config.apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ fields: subFields })
+            });
+
+            if (!subRes.ok) {
+                const err = await subRes.json();
+                console.error('[stripe/setup] Airtable Subscription Error:', err);
+                throw new Error(`Error creando suscripción: ${JSON.stringify(err)}`);
+            }
+
+            const newSub = await subRes.json();
+            subscriptionId = newSub.id;
         }
-
-        const newSub = await subRes.json();
-        const subscriptionId = newSub.id;
 
         // 2. Crear Checkout Session de Stripe directamente
         console.log(`[stripe/setup] Creating Stripe setup session for subscription ${subscriptionId}...`);

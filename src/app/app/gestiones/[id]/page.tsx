@@ -20,6 +20,7 @@ export default function GestionDetailPage() {
     const { user } = useAuth();
     const [gestion, setGestion] = useState<ManagementRequest | null>(null);
     const [payments, setPayments] = useState<Payment[]>([]);
+    const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [canceling, setCanceling] = useState(false);
 
@@ -38,12 +39,14 @@ export default function GestionDetailPage() {
         if (user?.airtableRecordId && id) {
             Promise.all([
                 managementService.getGestion(id),
-                paymentService.getPayments(user.airtableRecordId)
-            ]).then(([g, p]) => {
+                paymentService.getPayments(user.airtableRecordId),
+                paymentService.getPaymentMethods(user.airtableRecordId)
+            ]).then(([g, p, pm]) => {
                 setGestion(g || null);
                 if (g) {
                     setPayments(p.filter(pay => pay.managementId === g.id));
                 }
+                setPaymentMethods(pm || []);
                 setLoading(false);
             });
         }
@@ -253,20 +256,54 @@ export default function GestionDetailPage() {
                 {/* Actions */}
                 <div className="flex justify-end space-x-4 pt-4">
                     {gestion.status === "PendingPayment" && (
-                        <Button 
-                            onClick={async () => {
-                                try {
-                                    const url = await paymentService.getSetupUrl(user!.airtableRecordId, gestion.id, window.location.href.split('?')[0]);
-                                    window.location.href = url;
-                                } catch (err: any) {
-                                    alert(err.message || "Error al obtener URL de pago");
-                                }
-                            }}
-                            className="bg-green-600 hover:bg-green-700"
-                        >
-                            <TrendingUp className="w-4 h-4 mr-2" />
-                            Configurar medio de pago
-                        </Button>
+                        <div className="flex gap-2">
+                            {paymentMethods.length > 0 ? (
+                                <div className="flex gap-2">
+                                    <Button 
+                                        onClick={async () => {
+                                            try {
+                                                await paymentService.linkExistingMethod(gestion.id);
+                                                window.location.reload();
+                                            } catch (err: any) {
+                                                alert(err.message || "Error al vincular tarjeta");
+                                            }
+                                        }}
+                                        className="bg-green-600 hover:bg-green-700"
+                                    >
+                                        <TrendingUp className="w-4 h-4 mr-2" />
+                                        Usar tarjeta guardada
+                                    </Button>
+                                    <Button 
+                                        onClick={async () => {
+                                            try {
+                                                const url = await paymentService.getSetupUrl(user!.airtableRecordId, gestion.id, window.location.href.split('?')[0]);
+                                                window.location.href = url;
+                                            } catch (err: any) {
+                                                alert(err.message || "Error al obtener URL de pago");
+                                            }
+                                        }}
+                                        variant="outline"
+                                    >
+                                        Agregar nueva tarjeta
+                                    </Button>
+                                </div>
+                            ) : (
+                                <Button 
+                                    onClick={async () => {
+                                        try {
+                                            const url = await paymentService.getSetupUrl(user!.airtableRecordId, gestion.id, window.location.href.split('?')[0]);
+                                            window.location.href = url;
+                                        } catch (err: any) {
+                                            alert(err.message || "Error al obtener URL de pago");
+                                        }
+                                    }}
+                                    className="bg-green-600 hover:bg-green-700"
+                                >
+                                    <TrendingUp className="w-4 h-4 mr-2" />
+                                    Configurar medio de pago
+                                </Button>
+                            )}
+                        </div>
                     )}
                     {canCancel && (
                         <Button variant="danger" onClick={handleCancel} isLoading={canceling}>
