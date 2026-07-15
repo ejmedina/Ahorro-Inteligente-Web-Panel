@@ -8,7 +8,7 @@ export async function createNegotiationWithInvoice(userId: string, file: File, n
 
     // 1. Verificar si el usuario tiene métodos de pago reales
     // Obtenemos el registro del usuario para ver su stripeCustomerId
-    const userRes = await fetch(`https://api.airtable.com/v0/${config.baseId}/${config.usersTableId}/${userId}`, {
+    const userRes = await fetch(`https://api.airtable.com/v0/${config.baseId}/${config.usersTableId}/${userId}?returnFieldsByFieldId=1`, {
         headers: { 'Authorization': `Bearer ${config.apiKey}` }
     });
     const userData = await userRes.json();
