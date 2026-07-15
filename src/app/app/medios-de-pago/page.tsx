@@ -16,6 +16,7 @@ export default function MediosDePagoPage() {
     const [methods, setMethods] = useState<PaymentMethod[]>([]);
     const [loading, setLoading] = useState(true);
     const [redirecting, setRedirecting] = useState(false);
+    const [duplicateRemoved, setDuplicateRemoved] = useState(false);
     
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -39,7 +40,8 @@ export default function MediosDePagoPage() {
         if (user?.airtableRecordId) {
             paymentService.getPaymentMethods(user.airtableRecordId)
                 .then(data => {
-                    setMethods(data || []);
+                    setMethods(data.methods || []);
+                    if (data.duplicateRemoved) setDuplicateRemoved(true);
                 })
                 .catch(err => {
                     console.error("Error al cargar medios de pago:", err);
@@ -121,9 +123,15 @@ export default function MediosDePagoPage() {
                 </Button>
             </div>
 
-            {isSuccess && (
+            {isSuccess && !duplicateRemoved && (
                 <div className="p-4 bg-green-50 text-green-800 rounded-xl border border-green-200">
                     ✅ ¡La tarjeta se guardó correctamente!
+                </div>
+            )}
+            
+            {duplicateRemoved && (
+                <div className="p-4 bg-blue-50 text-blue-800 rounded-xl border border-blue-200">
+                    ℹ️ La tarjeta que ingresaste ya estaba guardada. No se agregaron duplicados.
                 </div>
             )}
             

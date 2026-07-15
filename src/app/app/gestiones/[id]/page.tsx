@@ -46,7 +46,7 @@ export default function GestionDetailPage() {
                 if (g) {
                     setPayments(p.filter(pay => pay.managementId === g.id));
                 }
-                setPaymentMethods(pm || []);
+                setPaymentMethods(pm.methods || []);
                 setLoading(false);
             });
         }

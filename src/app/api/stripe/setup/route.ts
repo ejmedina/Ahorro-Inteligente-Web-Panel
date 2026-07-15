@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        if (!subscriptionId) {
+        if (negotiationId && !subscriptionId) {
             // Crear la Suscripción en Airtable como requisito
             const subFields: any = {
                 "Subscription Plan": "Fee",
@@ -157,7 +157,7 @@ export async function POST(req: NextRequest) {
             customer: customerId,
             client_reference_id: subscriptionId,
             metadata: {
-                airtableSubscriptionId: subscriptionId,
+                airtableSubscriptionId: subscriptionId || "",
                 airtableUserId: user.recordId
             }
         });

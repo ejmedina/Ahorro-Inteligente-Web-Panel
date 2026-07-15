@@ -2,17 +2,20 @@ import { Payment, PaymentMethod } from '../types';
 import { stripeAdapter } from '../adapters/stripeAdapter';
 
 class PaymentService {
-    async getPaymentMethods(_userId: string): Promise<PaymentMethod[]> {
+    async getPaymentMethods(_userId: string): Promise<{ methods: PaymentMethod[], duplicateRemoved: boolean }> {
         const res = await fetch('/api/stripe/data', { cache: 'no-store' });
         if (!res.ok) throw new Error('Error al obtener medios de pago');
         const data = await res.json();
-        return data.methods.map((m: any) => ({
-            id: m.id,
-            brand: m.brand,
-            last4: m.last4,
-            issuerName: m.brand.toUpperCase(),
-            isDefault: m.isDefault
-        }));
+        return {
+            methods: data.methods.map((m: any) => ({
+                id: m.id,
+                brand: m.brand,
+                last4: m.last4,
+                issuerName: m.brand.toUpperCase(),
+                isDefault: m.isDefault
+            })),
+            duplicateRemoved: data.duplicateRemoved || false
+        };
     }
 
     async getPayments(_userId: string): Promise<Payment[]> {

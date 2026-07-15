@@ -77,6 +77,34 @@ export async function GET() {
         }
 
         // ---- SINCRONIZACIÓN AUTOMÁTICA ----
+        
+        let duplicateRemoved = false;
+        if (paymentMethods.length > 0) {
+            const seenFingerprints = new Set();
+            const uniqueMethods = [];
+            
+            for (const pm of paymentMethods) {
+                if (pm.card?.fingerprint) {
+                    if (seenFingerprints.has(pm.card.fingerprint)) {
+                        // Duplicate found. Detach it from Stripe silently.
+                        try {
+                            await stripeInstance.paymentMethods.detach(pm.id);
+                            duplicateRemoved = true;
+                            console.log(`[api/stripe/data] Removed duplicated card fingerprint ${pm.card.fingerprint} (PM: ${pm.id})`);
+                        } catch (e) {
+                            console.error(`[api/stripe/data] Failed to detach duplicated payment method ${pm.id}`, e);
+                        }
+                    } else {
+                        seenFingerprints.add(pm.card.fingerprint);
+                        uniqueMethods.push(pm);
+                    }
+                } else {
+                    uniqueMethods.push(pm);
+                }
+            }
+            paymentMethods = uniqueMethods;
+        }
+        
         const hasMethods = paymentMethods.length > 0;
         const { syncNegotiationsStatus } = require('@/lib/server/syncPayloads');
         await syncNegotiationsStatus(user.recordId, hasMethods, user.email);
@@ -89,6 +117,7 @@ export async function GET() {
         return NextResponse.json({
             success: true,
             hasMethods: hasMethods,
+            duplicateRemoved: duplicateRemoved,
             methods: paymentMethods.map(pm => ({
                 id: pm.id,
                 brand: pm.card?.brand,

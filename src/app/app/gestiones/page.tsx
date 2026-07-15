@@ -30,7 +30,7 @@ export default function GestionesPage() {
                 paymentService.getPaymentMethods(user.airtableRecordId)
             ]).then(([gestionesData, methodsData]) => {
                 setGestiones(gestionesData);
-                setHasPaymentMethods(methodsData.length > 0);
+                setHasPaymentMethods(methodsData.methods.length > 0);
             }).catch((error) => {
                 console.error("Error al cargar las gestiones:", error);
                 setGestiones([]);
