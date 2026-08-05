@@ -61,6 +61,36 @@ La aplicación estará disponible en `http://localhost:3000`.
 
 ---
 
+## Deploy a producción
+
+Este repositorio está vinculado en Vercel al proyecto `ahorro-inteligente-web-panel`, cuyo dominio de producción es `dashboard.ahorrointeligente.com.ar`.
+
+Antes de desplegar:
+
+```bash
+npx tsc --noEmit
+npm run lint
+npm run build
+```
+
+El flujo normal de producción es versionar los cambios en `main` y subirlos al remoto:
+
+```bash
+git add <archivos>
+git commit -m "Descripción del cambio"
+git push origin main
+```
+
+Vercel construye el commit de `main`. Al terminar, verificar el deployment y sus aliases con:
+
+```bash
+vercel inspect dashboard.ahorrointeligente.com.ar
+```
+
+Las variables nuevas deben cargarse en Vercel antes del deployment. Nunca deben versionarse secretos en archivos `.env`.
+
+---
+
 ## Cómo probar
 
 ### 1. Registro de usuario nuevo

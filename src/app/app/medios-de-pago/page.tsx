@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CreditCard, Plus, Star, Trash2 } from "lucide-react";
+import { trackPaymentMethodAdded } from "@/lib/analytics";
 
 export default function MediosDePagoPage() {
     const { user, isLoading: authLoading } = useAuth();
@@ -17,21 +18,52 @@ export default function MediosDePagoPage() {
     const [loading, setLoading] = useState(true);
     const [redirecting, setRedirecting] = useState(false);
     const [duplicateRemoved, setDuplicateRemoved] = useState(false);
+    const [setupComplete, setSetupComplete] = useState(false);
+    const [setupError, setSetupError] = useState("");
     
     const searchParams = useSearchParams();
     const router = useRouter();
     const pathname = usePathname();
     const isSuccess = searchParams?.get("success") === "true";
     const isCanceled = searchParams?.get("canceled") === "true";
+    const checkoutSessionId = searchParams?.get("session_id");
 
     useEffect(() => {
-        if (isSuccess || isCanceled) {
-            // Remove the query param from the URL cleanly
+        if (isCanceled) {
             router.replace(pathname || "/app/medios-de-pago");
         }
-    }, [isSuccess, isCanceled, router, pathname]);
+    }, [isCanceled, router, pathname]);
+
+    useEffect(() => {
+        if (!isSuccess) return;
+        if (!checkoutSessionId) {
+            setSetupError("No pudimos identificar la confirmación de Stripe.");
+            setLoading(false);
+            return;
+        }
+
+        let active = true;
+        paymentService.completeSetup(checkoutSessionId)
+            .then(() => {
+                if (!active) return;
+                trackPaymentMethodAdded(checkoutSessionId);
+                setSetupComplete(true);
+                router.replace(pathname || "/app/medios-de-pago");
+            })
+            .catch(error => {
+                if (!active) return;
+                setSetupError(error instanceof Error ? error.message : "No pudimos confirmar el medio de pago.");
+                setLoading(false);
+            });
+
+        return () => {
+            active = false;
+        };
+    }, [checkoutSessionId, isSuccess, pathname, router]);
 
     const loadMethods = React.useCallback(() => {
+        if (isSuccess && !setupComplete) return;
+
         if (!authLoading && !user?.airtableRecordId) {
             setLoading(false);
             return;
@@ -51,7 +83,7 @@ export default function MediosDePagoPage() {
                     setLoading(false);
                 });
         }
-    }, [user?.airtableRecordId, authLoading]);
+    }, [user?.airtableRecordId, authLoading, isSuccess, setupComplete]);
 
     useEffect(() => {
         loadMethods();
@@ -123,9 +155,15 @@ export default function MediosDePagoPage() {
                 </Button>
             </div>
 
-            {isSuccess && !duplicateRemoved && (
+            {setupComplete && !duplicateRemoved && (
                 <div className="p-4 bg-green-50 text-green-800 rounded-xl border border-green-200">
                     ✅ ¡La tarjeta se guardó correctamente!
+                </div>
+            )}
+
+            {setupError && (
+                <div className="p-4 bg-red-50 text-red-800 rounded-xl border border-red-200">
+                    {setupError}
                 </div>
             )}
             

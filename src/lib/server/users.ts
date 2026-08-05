@@ -97,6 +97,23 @@ export async function findUserByEmail(email: string): Promise<AirtableUser | nul
     return recordToUser(data.records[0]);
 }
 
+/** Busca un usuario por el ID de su registro de Airtable. */
+export async function findUserById(recordId: string): Promise<AirtableUser | null> {
+    const { usersTableId } = getAirtableConfig();
+    const url = `${buildAirtableUrl(usersTableId)}/${encodeURIComponent(recordId)}?returnFieldsByFieldId=1`;
+    const res = await fetch(url, { headers: getHeaders(), cache: 'no-store' });
+
+    if (res.status === 404) return null;
+
+    if (!res.ok) {
+        const body = await res.text();
+        throw new Error(`Airtable error buscando usuario por ID: ${res.status} ${body}`);
+    }
+
+    const record: AirtableRecord = await res.json();
+    return recordToUser(record);
+}
+
 /** Busca un usuario por teléfono normalizado. Retorna null si no existe. */
 export async function findUserByPhone(phone: string): Promise<AirtableUser | null> {
     const cleanedPhone = phone.replace(/[^0-9]/g, '');

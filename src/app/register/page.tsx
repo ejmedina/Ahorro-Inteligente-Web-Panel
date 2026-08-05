@@ -11,6 +11,7 @@ import * as z from "zod";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useAuth } from "@/contexts/AuthContext";
+import { trackRegistrationCompleted } from "@/lib/analytics";
 
 const registerSchema = z.object({
     name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
@@ -56,6 +57,8 @@ export default function RegisterPage() {
                 setError(json.error || "Error al registrar.");
                 return;
             }
+
+            trackRegistrationCompleted();
 
             // Si fue exitoso, el backend nos devuelve un mensaje diciendo que revisemos el email
             if (json.message) {

@@ -158,7 +158,8 @@ export async function POST(req: NextRequest) {
             client_reference_id: subscriptionId,
             metadata: {
                 airtableSubscriptionId: subscriptionId || "",
-                airtableUserId: user.recordId
+                airtableUserId: user.recordId,
+                airtableNegotiationId: negotiationId || ""
             }
         });
 

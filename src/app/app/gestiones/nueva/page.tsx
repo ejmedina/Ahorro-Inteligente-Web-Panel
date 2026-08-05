@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { managementService } from "@/lib/services/managementService";
@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { FileUpload } from "@/components/ui/FileUpload";
 import { Card, CardContent } from "@/components/ui/Card";
-import { ArrowLeft, CheckCircle2, Coffee } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { trackManagementCreated } from "@/lib/analytics";
+import { ManagementSuccess } from "@/components/management/ManagementSuccess";
 
 export default function NuevaGestionPage() {
     const router = useRouter();
@@ -21,15 +23,6 @@ export default function NuevaGestionPage() {
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
-
-    useEffect(() => {
-        if (isSuccess) {
-            const timer = setTimeout(() => {
-                router.push("/app/gestiones");
-            }, 5000);
-            return () => clearTimeout(timer);
-        }
-    }, [isSuccess, router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -57,6 +50,8 @@ export default function NuevaGestionPage() {
             
             const finalService = service === "Otro" ? otherService : service;
             const newGestion = await managementService.createGestion(user.airtableRecordId, file, notes, dni, finalService);
+
+            trackManagementCreated(finalService, newGestion.status);
             
             if (newGestion.status === "PendingPayment") {
                 router.push(`/app/gestiones/${newGestion.id}`);
@@ -70,25 +65,7 @@ export default function NuevaGestionPage() {
     };
 
     if (isSuccess) {
-        return (
-            <div className="max-w-2xl mx-auto h-[60vh] flex flex-col items-center justify-center space-y-6 animate-in fade-in zoom-in duration-500">
-                <div className="relative">
-                    <div className="absolute inset-0 bg-green-200 rounded-full blur-xl opacity-50 animate-pulse"></div>
-                    <CheckCircle2 className="w-24 h-24 text-green-500 relative z-10" />
-                </div>
-                <div className="text-center space-y-4">
-                    <h1 className="text-3xl font-bold tracking-tight text-gray-900">¡Gestión iniciada con éxito!</h1>
-                    <p className="text-lg text-gray-600 flex items-center justify-center gap-2">
-                        <Coffee className="w-5 h-5 text-amber-600" />
-                        Relajate y empezá a ahorrar en piloto automático.
-                    </p>
-                </div>
-                <div className="pt-8">
-                    <div className="w-10 h-10 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
-                    <p className="text-sm text-gray-500 mt-4">Redirigiendo a tus gestiones...</p>
-                </div>
-            </div>
-        );
+        return <ManagementSuccess />;
     }
 
     return (

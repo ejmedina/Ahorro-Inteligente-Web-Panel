@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation';
+import { getSession } from '@/lib/server/session';
 
-export default function Home() {
-  // Simple redirect to protected app logic relying on AuthContext redirecting to /login if needed
-  redirect('/login');
+export default async function Home() {
+  const session = await getSession();
+
+  redirect(session ? '/app' : '/register');
 }

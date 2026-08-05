@@ -57,6 +57,19 @@ class PaymentService {
         }
     }
 
+    async completeSetup(checkoutSessionId: string, negotiationId?: string): Promise<{ negotiationId?: string; status: string }> {
+        const res = await fetch('/api/stripe/setup/complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ checkoutSessionId, negotiationId })
+        });
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'Error al confirmar el medio de pago');
+        }
+        return res.json();
+    }
+
     async setDefaultMethod(_userId: string, id: string): Promise<void> {
         const res = await fetch(`/api/stripe/methods/${id}`, {
             method: 'PATCH'

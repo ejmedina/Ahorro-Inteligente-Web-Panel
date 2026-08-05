@@ -13,6 +13,8 @@ import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
 import { format, isValid } from "date-fns";
 import { es } from "date-fns/locale";
 import { ArrowLeft, FileText, Download, Ban, TrendingUp, Calendar, Clock } from "lucide-react";
+import { ManagementSuccess } from "@/components/management/ManagementSuccess";
+import { trackPaymentMethodAdded } from "@/lib/analytics";
 
 export default function GestionDetailPage() {
     const { id } = useParams() as { id: string };
@@ -23,34 +25,76 @@ export default function GestionDetailPage() {
     const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [canceling, setCanceling] = useState(false);
+    const [paymentSetupComplete, setPaymentSetupComplete] = useState(false);
+    const [paymentSetupError, setPaymentSetupError] = useState("");
 
     const searchParams = useSearchParams();
     const pathname = usePathname();
     const isSuccess = searchParams?.get("success") === "true";
     const isCanceled = searchParams?.get("canceled") === "true";
+    const checkoutSessionId = searchParams?.get("session_id");
 
     useEffect(() => {
-        if (isSuccess || isCanceled) {
+        if (isCanceled) {
             router.replace(pathname || `/app/gestiones/${id}`);
         }
-    }, [isSuccess, isCanceled, router, pathname, id]);
+    }, [isCanceled, router, pathname, id]);
 
     useEffect(() => {
+        if (!isSuccess) return;
+
+        if (!checkoutSessionId) {
+            setPaymentSetupError("No pudimos identificar la confirmación de Stripe.");
+            return;
+        }
+
+        let active = true;
+        paymentService.completeSetup(checkoutSessionId, id)
+            .then(result => {
+                if (!active) return;
+                if (result.negotiationId && result.negotiationId !== id) {
+                    throw new Error("La tarjeta fue confirmada para otra gestión.");
+                }
+                trackPaymentMethodAdded(checkoutSessionId);
+                setPaymentSetupComplete(true);
+                router.replace(pathname || `/app/gestiones/${id}`);
+            })
+            .catch(error => {
+                if (!active) return;
+                setPaymentSetupError(error instanceof Error ? error.message : "No pudimos confirmar el medio de pago.");
+            });
+
+        return () => {
+            active = false;
+        };
+    }, [checkoutSessionId, id, isSuccess, pathname, router]);
+
+    useEffect(() => {
+        if (isSuccess) return;
+
         if (user?.airtableRecordId && id) {
             Promise.all([
-                managementService.getGestion(id),
                 paymentService.getPayments(user.airtableRecordId),
                 paymentService.getPaymentMethods(user.airtableRecordId)
-            ]).then(([g, p, pm]) => {
-                setGestion(g || null);
-                if (g) {
-                    setPayments(p.filter(pay => pay.managementId === g.id));
-                }
-                setPaymentMethods(pm.methods || []);
-                setLoading(false);
-            });
+            ])
+                .then(async ([p, pm]) => {
+                    // /api/stripe/data sincroniza primero las gestiones con los
+                    // medios disponibles. Recién después leemos el estado para
+                    // evitar mostrar un PendingPayment obsoleto.
+                    const g = await managementService.getGestion(id);
+                    setGestion(g || null);
+                    if (g) {
+                        setPayments(p.filter(pay => pay.managementId === g.id));
+                    }
+                    setPaymentMethods(pm.methods || []);
+                })
+                .catch(error => {
+                    console.error("Error al cargar el detalle de la gestión:", error);
+                    setGestion(null);
+                })
+                .finally(() => setLoading(false));
         }
-    }, [user?.airtableRecordId, id]);
+    }, [user?.airtableRecordId, id, isSuccess]);
 
     const handleCancel = async () => {
         if (!window.confirm("¿Seguro que querés cancelar esta gestión?")) return;
@@ -64,6 +108,35 @@ export default function GestionDetailPage() {
             setCanceling(false);
         }
     };
+
+    if (paymentSetupComplete) {
+        return <ManagementSuccess />;
+    }
+
+    if (isSuccess && !paymentSetupError) {
+        return (
+            <div className="max-w-2xl mx-auto h-[60vh] flex flex-col items-center justify-center space-y-4 text-center">
+                <div className="w-10 h-10 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
+                <h1 className="text-xl font-semibold text-gray-900">Confirmando tu medio de pago…</h1>
+                <p className="text-sm text-gray-500">Esto puede demorar unos segundos.</p>
+            </div>
+        );
+    }
+
+    if (paymentSetupError) {
+        return (
+            <div className="max-w-xl mx-auto py-16 text-center space-y-4">
+                <h1 className="text-2xl font-bold text-gray-900">No pudimos terminar la configuración</h1>
+                <p className="text-gray-600">{paymentSetupError}</p>
+                <Button onClick={() => {
+                    setPaymentSetupError("");
+                    router.replace(pathname || `/app/gestiones/${id}`);
+                }}>
+                    Volver a la gestión
+                </Button>
+            </div>
+        );
+    }
 
     if (loading) {
         return (
@@ -112,12 +185,6 @@ export default function GestionDetailPage() {
                 </div>
             </div>
 
-            {isSuccess && (
-                <div className="p-4 bg-green-50 text-green-800 rounded-xl border border-green-200">
-                    ✅ ¡La tarjeta se guardó correctamente!
-                </div>
-            )}
-            
             {isCanceled && (
                 <div className="p-4 bg-yellow-50 text-yellow-800 rounded-xl border border-yellow-200">
                     ⚠️ Cancelaste el proceso de agregar tarjeta.

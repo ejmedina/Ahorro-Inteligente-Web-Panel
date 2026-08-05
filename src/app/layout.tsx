@@ -2,6 +2,8 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { Analytics } from '@/components/analytics/Analytics'
+import { CookieConsent } from '@/components/analytics/CookieConsent'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -21,6 +23,8 @@ export default function RootLayout({
         <AuthProvider>
           {children}
         </AuthProvider>
+        <Analytics />
+        <CookieConsent />
       </body>
     </html>
   )
