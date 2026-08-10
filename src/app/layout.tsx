@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { Analytics } from '@/components/analytics/Analytics'
 import { CookieConsent } from '@/components/analytics/CookieConsent'
+import { GoogleTags } from '@/app/_components/GoogleTags'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -20,6 +21,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={`${inter.className} bg-gray-50 text-gray-900 antialiased`}>
+        <GoogleTags />
         <AuthProvider>
           {children}
         </AuthProvider>

@@ -10,8 +10,19 @@ import {
 } from "@/lib/cookieConsent";
 
 const metaPixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
-const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
 const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+
+function updateGoogleConsent(consent: CookieConsentValue | null) {
+    if (!window.gtag) return;
+
+    const state = consent === "granted" ? "granted" : "denied";
+    window.gtag("consent", "update", {
+        analytics_storage: state,
+        ad_storage: state,
+        ad_user_data: state,
+        ad_personalization: state,
+    });
+}
 
 export function Analytics() {
     const pathname = usePathname();
@@ -21,10 +32,14 @@ export function Analytics() {
     const hasConsent = consent === "granted";
 
     useEffect(() => {
-        setConsent(readCookieConsent());
+        const savedConsent = readCookieConsent();
+        setConsent(savedConsent);
+        updateGoogleConsent(savedConsent);
 
         const handleConsent = (event: Event) => {
-            setConsent((event as CustomEvent<CookieConsentValue>).detail);
+            const nextConsent = (event as CustomEvent<CookieConsentValue>).detail;
+            updateGoogleConsent(nextConsent);
+            setConsent(nextConsent);
         };
         window.addEventListener(COOKIE_CONSENT_EVENT, handleConsent);
         return () => window.removeEventListener(COOKIE_CONSENT_EVENT, handleConsent);
@@ -42,24 +57,14 @@ export function Analytics() {
     }, [hasConsent, pathname]);
 
     useEffect(() => {
-        if (!gaMeasurementId || !hasConsent || !pathname || lastGooglePath.current === pathname) return;
-
-        window.dataLayer = window.dataLayer || [];
-        window.gtag = window.gtag || function gtag(...args: unknown[]) {
-            window.dataLayer?.push(args);
-        };
-
-        if (lastGooglePath.current === null) {
-            window.gtag("js", new Date());
-            window.gtag("config", gaMeasurementId, { send_page_view: false });
-        }
+        if (!gaMeasurementId || !window.gtag || !pathname || lastGooglePath.current === pathname) return;
 
         window.gtag("event", "page_view", {
             page_path: pathname,
             page_location: window.location.href,
         });
         lastGooglePath.current = pathname;
-    }, [hasConsent, pathname]);
+    }, [pathname]);
 
     return (
         <>
@@ -92,36 +97,6 @@ export function Analytics() {
                 </>
             )}
 
-            {gtmId && hasConsent && (
-                <>
-                    <Script id="google-tag-manager" strategy="afterInteractive">
-                        {`
-                            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-                            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-                            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-                            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-                            })(window,document,'script','dataLayer',${JSON.stringify(gtmId)});
-                        `}
-                    </Script>
-                    <noscript>
-                        <iframe
-                            src={`https://www.googletagmanager.com/ns.html?id=${encodeURIComponent(gtmId)}`}
-                            height="0"
-                            width="0"
-                            className="hidden invisible"
-                            title="Google Tag Manager"
-                        />
-                    </noscript>
-                </>
-            )}
-
-            {gaMeasurementId && hasConsent && (
-                <Script
-                    id="google-analytics"
-                    src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(gaMeasurementId)}`}
-                    strategy="afterInteractive"
-                />
-            )}
         </>
     );
 }
