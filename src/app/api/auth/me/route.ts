@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-import { getSession } from '@/lib/server/session';
+import { buildSetKnownDeviceCookieHeader, getSession } from '@/lib/server/session';
 import { findUserByEmail } from '@/lib/server/users';
 
 export async function GET() {
@@ -19,7 +19,7 @@ export async function GET() {
             return NextResponse.json({ error: 'Usuario no encontrado en bd.' }, { status: 401 });
         }
 
-        return NextResponse.json({
+        const response = NextResponse.json({
             user: {
                 airtableRecordId: session.airtableRecordId,
                 fullName: dbUser.fullName,
@@ -28,6 +28,8 @@ export async function GET() {
                 subscriptionStatus: dbUser.subscriptionStatus,
             },
         });
+        response.headers.append('Set-Cookie', buildSetKnownDeviceCookieHeader());
+        return response;
     } catch (err: unknown) {
         console.error('[auth/me] Error:', err);
         return NextResponse.json({ error: 'No autenticado.' }, { status: 401 });

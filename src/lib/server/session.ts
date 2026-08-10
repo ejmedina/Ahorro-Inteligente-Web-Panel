@@ -2,7 +2,9 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 
 const COOKIE_NAME = 'ahorro_session';
+const KNOWN_DEVICE_COOKIE_NAME = 'ai_known_device';
 const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 7; // 7 días
+const KNOWN_DEVICE_DURATION_SECONDS = 60 * 60 * 24 * 365; // 1 año
 
 export interface SessionPayload {
     airtableRecordId: string;
@@ -55,12 +57,28 @@ export async function getSession(): Promise<SessionPayload | null> {
     }
 }
 
+/** Indica que este navegador inició sesión anteriormente, sin guardar datos personales. */
+export function hasKnownDeviceCookie(): boolean {
+    try {
+        return cookies().get(KNOWN_DEVICE_COOKIE_NAME)?.value === '1';
+    } catch {
+        return false;
+    }
+}
+
 /** Retorna los Set-Cookie headers para iniciar sesión */
 export async function buildSetSessionCookieHeader(payload: SessionPayload): Promise<string> {
     const token = await createSessionCookie(payload);
     const isProduction = process.env.NODE_ENV === 'production';
     const secureFlag = isProduction ? '; Secure' : '';
     return `${COOKIE_NAME}=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${SESSION_DURATION_SECONDS}${secureFlag}`;
+}
+
+/** Conserva el rastro técnico de un login aunque la sesión se cierre o venza. */
+export function buildSetKnownDeviceCookieHeader(): string {
+    const isProduction = process.env.NODE_ENV === 'production';
+    const secureFlag = isProduction ? '; Secure' : '';
+    return `${KNOWN_DEVICE_COOKIE_NAME}=1; HttpOnly; SameSite=Lax; Path=/; Max-Age=${KNOWN_DEVICE_DURATION_SECONDS}${secureFlag}`;
 }
 
 /** Retorna el Set-Cookie header para cerrar sesión (expiración en el pasado) */

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAirtableConfig, FIELDS, sanitizeAirtableValue } from '@/lib/server/airtableFieldIds';
 import { updateUser } from '@/lib/server/users';
-import { buildSetSessionCookieHeader } from '@/lib/server/session';
+import { buildSetKnownDeviceCookieHeader, buildSetSessionCookieHeader } from '@/lib/server/session';
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
         // Redirigir al panel (dashboard) con la cookie de sesión y parametro de éxito
         const response = NextResponse.redirect(new URL('/app?verified=true', request.url));
         response.headers.set('Set-Cookie', cookieHeader);
+        response.headers.append('Set-Cookie', buildSetKnownDeviceCookieHeader());
         
         return response;
 

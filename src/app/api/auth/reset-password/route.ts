@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { getAirtableConfig, FIELDS, sanitizeAirtableValue } from '@/lib/server/airtableFieldIds';
 import { updateUser } from '@/lib/server/users';
-import { buildSetSessionCookieHeader } from '@/lib/server/session';
+import { buildSetKnownDeviceCookieHeader, buildSetSessionCookieHeader } from '@/lib/server/session';
 
 export async function POST(request: NextRequest) {
     try {
@@ -60,12 +60,13 @@ export async function POST(request: NextRequest) {
 
         const cookieHeader = await buildSetSessionCookieHeader(sessionPayload);
 
-        return NextResponse.json({
+        const response = NextResponse.json({
             success: true,
             message: 'Contraseña actualizada con éxito.'
-        }, {
-            headers: { 'Set-Cookie': cookieHeader }
         });
+        response.headers.set('Set-Cookie', cookieHeader);
+        response.headers.append('Set-Cookie', buildSetKnownDeviceCookieHeader());
+        return response;
 
     } catch (error) {
         console.error('[auth/reset-password] Error:', error);

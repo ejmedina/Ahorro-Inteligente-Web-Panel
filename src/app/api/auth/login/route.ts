@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import bcrypt from 'bcryptjs';
 import { findUserByEmail, updateUser } from '@/lib/server/users';
-import { buildSetSessionCookieHeader, SessionPayload } from '@/lib/server/session';
+import { buildSetKnownDeviceCookieHeader, buildSetSessionCookieHeader, SessionPayload } from '@/lib/server/session';
 
 export async function POST(request: NextRequest) {
     try {
@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
             { status: 200 }
         );
         response.headers.set('Set-Cookie', cookieHeader);
+        response.headers.append('Set-Cookie', buildSetKnownDeviceCookieHeader());
         return response;
     } catch (err: unknown) {
         console.error('[auth/login] Error:', err);
